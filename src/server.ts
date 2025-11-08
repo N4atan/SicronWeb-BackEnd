@@ -1,6 +1,7 @@
 
 import { AppDataSource } from "./config/data-source";
 import UserRoutes from './routers/UserRoutes';
+import OngRoutes from './routers/OngRoutes'
 import * as dotenv from "dotenv";
 import cors from 'cors';
 import express, { Application } from 'express';
@@ -12,6 +13,7 @@ app.use(express.json());
 app.use(cors());
 
 app.use("/api", UserRoutes);
+app.use('/api', OngRoutes);
 
 AppDataSource.initialize()
   .then(() => {

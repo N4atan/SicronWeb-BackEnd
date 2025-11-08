@@ -1,7 +1,7 @@
 import { UserRepository } from "../repositories/UserRepository";
 import { Response, Request } from 'express';
 import { UserRole } from '../entities/User';
-
+import { User } from '../entities/User';
 
 const userRepository = new UserRepository();
 
@@ -12,15 +12,15 @@ export class UserController {
 
             if ( !username || !email || !password ) return res.status(400).json({ message: "Há campos em branco!" });
 
-            const emailExists = userRepository.findByEmail(email);
+            const emailExists: User | null = await userRepository.findByEmail(email);
 
-            if ( !emailExists ) return res.status(409).json({ message: "Email já está em uso!" });
+            if ( emailExists ) return res.status(409).json({ message: "Email já está em uso!" });
 
-            const userCreated = await userRepository.createAndSave({
+            const userCreated = await userRepository.createAndSave(new User({
                 username,
                 email,
                 password,
-            })
+            }))
 
             return res.status(201).json({ userCreated })
         }
