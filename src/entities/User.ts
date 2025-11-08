@@ -15,13 +15,13 @@ export class User {
     id?: number;
 
     @Column({ length: 100 })
-    username: string;
+    username!: string;
 
     @Column({ length: 100, unique: true })
-    email: string;
+    email!: string;
 
     @Column({ length: 255 })
-    password: string;
+    password!: string;
 
     @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
     role!: UserRole;
@@ -44,14 +44,9 @@ export class User {
     }
 
 
-    constructor(
-            username: string,
-            email: string,
-            password: string,
-            )
-        {
-            this.username = username;
-            this.email = email;
-            this.password = password;
+    constructor(user?: Partial<User>) {
+        if (user) {
+            Object.assign(this, user);
+        }
     }
 }
