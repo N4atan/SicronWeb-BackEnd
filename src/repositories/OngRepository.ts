@@ -24,8 +24,13 @@ export class OngRepository {
         return this.repository.findOneBy({ id });
     }
 
-    async findByLegalName( legal_name: string ): Promise<Ong | null> {
-        return this.repository.findOneBy({ legal_name })
+    async findByRazaoSocial( razao_social: string ): Promise<Ong | null> {
+        return this.repository.findOneBy({ razao_social })
+    }
+
+    // Interessante deixar para achar todos que incluem a pesquisa.
+    async findByNomeFantasia( nome_fantasia: string ): Promise<Ong | null> {
+        return this.repository.findOneBy({ nome_fantasia })
     }
 
 

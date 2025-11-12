@@ -12,23 +12,23 @@ export class OngController {
     static async register( req: Request, res: Response ): Promise<Response> {
         try {
             const {
-                manager_id,
-                legal_name,
-                business_name,
+                gestor_id,
+                razao_social,
+                nome_fantasia,
                 cnpj,
                 cep_location,
-                phone_number,
-                email_contact,
+                numero_telefone,
+                email_contato,
             } = req.body;
 
             const requiredFields = { 
-                legal_name, 
-                business_name, 
+                razao_social, 
+                nome_fantasia, 
                 cnpj, 
                 cep_location, 
-                phone_number, 
-                email_contact,
-                manager_id // Assumindo que o ID do manager venha no body
+                numero_telefone, 
+                email_contato,
+                gestor_id // Assumindo que o ID do manager venha no body
             };
                
                // Itera sobre os valores do objeto
@@ -38,23 +38,23 @@ export class OngController {
                 }
             }
 
-            const ongExists: Ong | null = await ongRepository.findByLegalName(legal_name);
+            const ongExists: Ong | null = await ongRepository.findByRazaoSocial(razao_social);
 
             if ( ongExists ) return res.status(409).json({ message: "Razão Social já cadastrada!" });
 
-            const managerExist: User | null = await userRepository.findById( manager_id );
+            const gestorExist: User | null = await userRepository.findById( gestor_id );
 
             //Unprocessable Entity
-            if ( !managerExist ) return res.status(422).json({ message: `O 'manager_id' fornecido (${manager_id}) não corresponde a um usuário válido.` });
+            if ( !gestorExist ) return res.status(422).json({ message: `O 'manager_id' fornecido (${gestor_id}) não corresponde a um usuário válido.` });
 
             const ongCreated = await ongRepository.createAndSave({
-                manager: new User({ id: manager_id }),
-                legal_name,
-                business_name,
+                gestor: new User({ id: gestor_id }),
+                razao_social,
+                nome_fantasia,
                 cnpj,
                 cep_location,
-                phone_number,
-                email_contact,
+                numero_telefone,
+                email_contato,
             })
 
             return res.status(201).json({ ongCreated })

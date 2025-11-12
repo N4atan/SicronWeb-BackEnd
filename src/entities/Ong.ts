@@ -11,13 +11,13 @@ export class Ong {
 
     @ManyToOne(() => User)
     @JoinColumn({ name: 'manager_id' })
-    manager: User;
+    gestor: User;
 
     @Column({ unique: true })
-    legal_name: string;
+    razao_social: string;
 
     @Column()
-    business_name: string;
+    nome_fantasia: string;
 
     @Column({ unique: true })
     cnpj: string;
@@ -29,10 +29,10 @@ export class Ong {
     cep_location: string;
 
     @Column({ length: 15 })
-    phone_number: string;
+    numero_telefone: string;
 
     @Column({ length: 100 })
-    email_contact: string;
+    email_contato: string;
 
     constructor(
         manager: User,
@@ -44,13 +44,13 @@ export class Ong {
         phone_number: string,
         email_contact: string
     ) {
-        this.manager = manager,
-        this.legal_name = legal_name,
-        this.business_name = business_name,
+        this.gestor = manager,
+        this.razao_social = legal_name,
+        this.nome_fantasia = business_name,
         this.cnpj = cnpj,
         this.wallet = wallet,
         this.cep_location = cep_location,
-        this.phone_number = phone_number,
-        this.email_contact = email_contact
+        this.numero_telefone = phone_number,
+        this.email_contato = email_contact
     }
 }
