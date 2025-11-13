@@ -77,4 +77,21 @@ export class OngController {
             return res.status(500).json({ message: `Internal Error Server: ${e}` })
         }
     }
+
+    static async delete( req: Request, res: Response ): Promise<Response> {
+        try {
+            const { id } = req.params;
+
+            const ong = await ongRepository.findById(Number(id));
+
+            if ( !ong ) return res.status(404).json({ message: `ONG não encontrada!` });
+
+            await ongRepository.remove(ong);
+            return res.status(204).send();
+        }
+        catch ( e ) {
+            console.error(`Ocorreu um erro: ${e}`)
+            return res.status(500).json({ message: `Internal Error Server: ${e}` })
+        }
+    }
 }
