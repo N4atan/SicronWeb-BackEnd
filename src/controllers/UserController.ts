@@ -32,11 +32,21 @@ export class UserController {
 
     }
 
-    static async show( req: Request, res: Response ): Promise<Response> {
+    static async index( req: Request, res: Response ): Promise<Response> {
         try{
-            const { id } = req.params
+            const { id, email } = req.query
 
-            const user = await userRepository.findById(Number(id));
+            let user;
+
+            if ( id ) {
+                user = await userRepository.findById(Number(id));
+            } else if (email) {
+                user = await userRepository.findByEmail(String(email));
+            } else {
+                user = await userRepository.findAll();
+            }
+
+            
 
             if ( !user ) return res.status(404).json({ message: `Usuário não encontrado!` });
 
