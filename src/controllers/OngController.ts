@@ -12,9 +12,10 @@ export class OngController {
     static async register( req: Request, res: Response ): Promise<Response> {
         try {
             const {
-                gestor_id,
+                gestor_email,
                 razao_social,
                 nome_fantasia,
+                objetivo,
                 cnpj,
                 cep_location,
                 numero_telefone,
@@ -24,11 +25,12 @@ export class OngController {
             const requiredFields = { 
                 razao_social, 
                 nome_fantasia, 
+                objetivo,
                 cnpj, 
                 cep_location, 
                 numero_telefone, 
                 email_contato,
-                gestor_id // Assumindo que o ID do manager venha no body
+                gestor_email // Assumindo que o email do manager venha no body
             };
                
                // Itera sobre os valores do objeto
@@ -42,15 +44,16 @@ export class OngController {
 
             if ( ongExists ) return res.status(409).json({ message: "Razão Social já cadastrada!" });
 
-            const gestorExist: User | null = await userRepository.findById( gestor_id );
+            const gestorExist: User | null = await userRepository.findByEmail( gestor_email );
 
             //Unprocessable Entity
-            if ( !gestorExist ) return res.status(422).json({ message: `O 'manager_id' fornecido (${gestor_id}) não corresponde a um usuário válido.` });
+            if ( !gestorExist ) return res.status(422).json({ message: `O 'manager_email' fornecido (${gestor_email}) não corresponde a um usuário válido.` });
 
             const ongCreated = await ongRepository.createAndSave({
-                gestor: new User({ id: gestor_id }),
+                gestor: new User({ email: gestor_email }),
                 razao_social,
                 nome_fantasia,
+                objetivo,
                 cnpj,
                 cep_location,
                 numero_telefone,
