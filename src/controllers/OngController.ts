@@ -3,6 +3,7 @@ import { Ong } from '../entities/Ong';
 import { User } from '../entities/User'
 import { Response, Request } from 'express';
 import { OngRepository } from "../repositories/OngRepository";
+import { Like } from 'typeorm';
 
 
 const ongRepository = new OngRepository();
@@ -70,9 +71,22 @@ export class OngController {
     
 
     static async list( req: Request, res: Response ): Promise<Response> {
+        const { id, nome_fantasia, foco_principal, local, status } = req.query;
+
+        const whereConditions: any = {};
+
+        if (id)                 whereConditions.id              = Like(`%${id}%`);
+        if (nome_fantasia)      whereConditions.nome_fantasia   = Like(`%${nome_fantasia}%`);
+        if (foco_principal)     whereConditions.foco_principal  = Like(`%${foco_principal}%`);
+        if (local)              whereConditions.local           = Like(`%${local}%`);
+        if ( status )           whereConditions.status          = String(status);
+
         try{
-            const ongs = await ongRepository.findAll();
-            return res.json({ ongs })
+            const ongs = await ongRepository.findAll({
+                where: whereConditions
+            })
+
+            return res.status(200).json(ongs);
         }
         catch ( e ) {
             console.error(`Ocorreu um erro: ${e}`)
