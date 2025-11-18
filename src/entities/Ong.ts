@@ -10,7 +10,7 @@ export class Ong {
     id?:number;
 
     @ManyToOne(() => User)
-    @JoinColumn({ name: 'manager_email' })
+    @JoinColumn({ name: 'gestor_email' })
     gestor: User;
 
     @Column({ unique: true })
