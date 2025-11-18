@@ -9,9 +9,8 @@ export class Ong {
     @PrimaryGeneratedColumn()
     id?:number;
 
-    @ManyToOne(() => User)
     @JoinColumn({ name: 'gestor_email' })
-    gestor: User;
+    gestor: string;
 
     @Column({ unique: true })
     razao_social: string;
@@ -35,7 +34,7 @@ export class Ong {
     email_contato: string;
 
     constructor(
-        manager: User,
+        manager: string,
         legal_name: string,
         business_name: string,
         cnpj: string,
