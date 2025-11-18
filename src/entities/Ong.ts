@@ -1,5 +1,11 @@
 import { Collection, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
+export enum ongStatus {
+    PENDENTE = 'pendente',
+    APROVADA = 'aprovada',
+    REJEITADA = 'rejeitada'
+}
+
 @Entity('ongs')
 export class Ong {
     @PrimaryGeneratedColumn()
@@ -35,8 +41,11 @@ export class Ong {
     @Column({ length: 100 })
     email_contato: string;
 
-    @Column({ type: Date })
+    @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
     criadaEm?: Date;
+
+    @Column({ type: 'enum', enum: ongStatus, default: ongStatus.PENDENTE })
+    status!: ongStatus;
 
     constructor(
         manager_email: string,
