@@ -28,10 +28,9 @@ export class OngController {
                 cep_location, 
                 numero_telefone, 
                 email_contato,
-                gestor_email // Assumindo que o ID do manager venha no body
+                gestor_email
             };
                
-               // Itera sobre os valores do objeto
             for (const [key, value] of Object.entries(requiredFields)) {
                 if (!value) {
                     return res.status(400).json({ message: `O campo '${key}' é obrigatório!` });
@@ -39,16 +38,13 @@ export class OngController {
             }
 
             const ongExists: Ong | null = await ongRepository.findByRazaoSocial(razao_social);
-
             if ( ongExists ) return res.status(409).json({ message: "Razão Social já cadastrada!" });
 
-            const gestorExist: User | null = await userRepository.findByEmail( gestor_email );
-
-            //Unprocessable Entity
-            if ( !gestorExist ) return res.status(422).json({ message: `O 'manager_id' fornecido (${gestor_email}) não corresponde a um usuário válido.` });
+            const gestorExists: User | null = await userRepository.findByEmail( gestor_email );
+            if ( !gestorExists ) return res.status(422).json({ message: `O 'gestor_email' fornecido (${gestor_email}) não corresponde a um usuário válido.` });
 
             const ongCreated = await ongRepository.createAndSave({
-                gestor: new User({ email: gestor_email }),
+                gestor_email,
                 razao_social,
                 nome_fantasia,
                 cnpj,
