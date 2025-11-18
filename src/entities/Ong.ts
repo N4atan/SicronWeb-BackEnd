@@ -1,15 +1,11 @@
 import { Collection, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import { User } from "./User";
-
-
-
 
 @Entity('ongs')
 export class Ong {
     @PrimaryGeneratedColumn()
     id?:number;
 
-    @JoinColumn({ name: 'gestor_email' })
+    @Column()
     gestor_email: string;
 
     @Column({ unique: true })
