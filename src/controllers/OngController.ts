@@ -16,19 +16,23 @@ export class OngController {
                 razao_social,
                 nome_fantasia,
                 cnpj,
-                cep_location,
+                foco_principal,
+                objetivo,
+                local,
                 numero_telefone,
                 email_contato,
             } = req.body;
 
             const requiredFields = { 
+                gestor_email,
                 razao_social, 
                 nome_fantasia, 
-                cnpj, 
-                cep_location, 
+                cnpj,
+                foco_principal,
+                objetivo, 
+                local, 
                 numero_telefone, 
                 email_contato,
-                gestor_email
             };
                
             for (const [key, value] of Object.entries(requiredFields)) {
@@ -47,8 +51,10 @@ export class OngController {
                 gestor_email,
                 razao_social,
                 nome_fantasia,
+                foco_principal,
+                objetivo,
                 cnpj,
-                cep_location,
+                local,
                 numero_telefone,
                 email_contato,
             })
