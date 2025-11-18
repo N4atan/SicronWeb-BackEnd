@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { FindManyOptions, Repository } from "typeorm";
 import { Ong } from '../entities/Ong'
 import { AppDataSource } from "../config/data-source";
 
@@ -16,8 +16,8 @@ export class OngRepository {
         return this.repository.save(Ong);
     }
 
-    async findAll(): Promise<Ong[]> {
-        return this.repository.find(); 
+    async findAll(options?: FindManyOptions<Ong>): Promise<Ong[]> {
+        return this.repository.find(options); 
     }
 
     async findById( id: number ): Promise<Ong | null> {
@@ -41,4 +41,7 @@ export class OngRepository {
     async remove( Ong: Ong ): Promise<Ong> {
         return this.repository.remove(Ong);
     }
+
+
+    
 }
