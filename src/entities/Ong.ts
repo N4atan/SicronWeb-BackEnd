@@ -10,7 +10,7 @@ export class Ong {
     id?:number;
 
     @JoinColumn({ name: 'gestor_email' })
-    gestor: string;
+    gestor_email: string;
 
     @Column({ unique: true })
     razao_social: string;
@@ -34,7 +34,7 @@ export class Ong {
     email_contato: string;
 
     constructor(
-        manager: string,
+        manager_email: string,
         legal_name: string,
         business_name: string,
         cnpj: string,
@@ -43,7 +43,7 @@ export class Ong {
         phone_number: string,
         email_contact: string
     ) {
-        this.gestor = manager,
+        this.gestor_email = manager_email,
         this.razao_social = legal_name,
         this.nome_fantasia = business_name,
         this.cnpj = cnpj,
