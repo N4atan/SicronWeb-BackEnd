@@ -45,7 +45,7 @@ export class Ong {
     criadaEm?: Date;
 
     @Column({ type: 'enum', enum: ongStatus, default: ongStatus.PENDENTE })
-    status!: ongStatus;
+    status!: 'PENDENTE' | 'APROVADA' | 'REJEITADA';
 
     constructor(
         manager_email: string,
