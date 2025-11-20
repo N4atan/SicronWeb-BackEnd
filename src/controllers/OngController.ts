@@ -110,4 +110,25 @@ export class OngController {
             return res.status(500).json({ message: `Internal Error Server: ${e}` })
         }
     }
+
+
+    static async updatePartial( req: Request, res: Response ): Promise<Response> {
+        const { id } = req.params;
+        const updateData = req.body;
+
+        try {
+            const ong = await ongRepository.findById(Number(id));
+
+            if ( !ong ) return res.status(404).json({ message: `ONG não encontrada!` });
+
+            Object.assign(ong, updateData);
+
+            const updatedOng = await ongRepository.save(ong);
+            return res.status(200).json(updatedOng);
+            
+        } catch ( e ) {
+            console.error(`Ocorreu um erro: ${e}`)
+            return res.status(500).json({ message: `Internal Error Server: ${e}` })
+        }
+    }
 }
