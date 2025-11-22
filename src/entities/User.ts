@@ -1,16 +1,18 @@
 import { BeforeInsert, BeforeUpdate, AfterLoad, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
-import * as bcrypt from 'bcryptjs';
 
-export enum UserRole {
-    USER = 'user',
-    ADMIN = 'admin',
-    ONG_MANAGER = 'ongManager',
+import { CryptService } from "../services/CryptService";
+
+export enum UserRole
+{
+    USER             = 'user',
+    ADMIN            = 'admin',
+    ONG_MANAGER      = 'ongManager',
     PROVIDER_MANAGER = 'providerManager'
 }
 
-
 @Entity('users')
-export class User {
+export class User
+{
     @PrimaryGeneratedColumn()
     id?: number;
 
@@ -26,27 +28,25 @@ export class User {
     @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
     role!: UserRole;
 
-    // Para implementar a funcionalidade de "esqueci minha senha"
     private previous_password!: string;
 
     @BeforeInsert()
     @BeforeUpdate()
-    async hashPassword() {
-        if (this.password !== this.previous_password) {
-            const salt = await bcrypt.genSalt(10);
-            this.password = await bcrypt.hash(this.password, salt);
-        }
+    private async hashPassword(): Promise<void>
+    {
+        if (this.password === this.previous_password) return;
+        this.password = await CryptService.hash(this.password);
     }
 
     @AfterLoad()
-    loadPreviousPassword() {
+    private loadPreviousPassword(): void
+    {
         this.previous_password = this.password;
     }
 
-
-    constructor(user?: Partial<User>) {
-        if (user) {
-            Object.assign(this, user);
-        }
+    public constructor(user?: Partial<User>)
+    {
+        if (!user) return;
+        Object.assign(this, user);
     }
 }

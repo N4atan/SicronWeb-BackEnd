@@ -1,16 +1,18 @@
-import { UserRepository } from './../repositories/UserRepository';
-import { Ong } from '../entities/Ong';
-import { User } from '../entities/User'
 import { Response, Request } from 'express';
-import { OngRepository } from "../repositories/OngRepository";
-import { Like } from 'typeorm';
+import { Like              } from 'typeorm';
 
+import { UserRepository } from './../repositories/UserRepository';
+import { OngRepository  } from "../repositories/OngRepository";
 
-const ongRepository = new OngRepository();
-const userRepository = new UserRepository();
+import { Ong  } from '../entities/Ong';
+import { User } from '../entities/User'
 
 export class OngController {
-    static async register( req: Request, res: Response ): Promise<Response> {
+    static ongRepository  = new OngRepository();
+    static userRepository = new UserRepository();
+    
+    static async register( req: Request, res: Response ): Promise<Response>
+    {
         try {
             const {
                 gestor_email,
@@ -42,13 +44,13 @@ export class OngController {
                 }
             }
 
-            const ongExists: Ong | null = await ongRepository.findByRazaoSocial(razao_social);
+            const ongExists: Ong | null = await OngController.ongRepository.findByRazaoSocial(razao_social);
             if ( ongExists ) return res.status(409).json({ message: "Razão Social já cadastrada!" });
 
-            const gestorExists: User | null = await userRepository.findByEmail( gestor_email );
+            const gestorExists: User | null = await OngController.userRepository.findByEmail( gestor_email );
             if ( !gestorExists ) return res.status(422).json({ message: `O 'gestor_email' fornecido (${gestor_email}) não corresponde a um usuário válido.` });
 
-            const ongCreated = await ongRepository.createAndSave({
+            const ongCreated = await OngController.ongRepository.createAndSave({
                 gestor_email,
                 razao_social,
                 nome_fantasia,
@@ -68,9 +70,8 @@ export class OngController {
         }
     }
 
-    
-
-    static async list( req: Request, res: Response ): Promise<Response> {
+    static async list( req: Request, res: Response ): Promise<Response>
+    {
         const { id, nome_fantasia, foco_principal, local, status } = req.query;
 
         const whereConditions: any = {};
@@ -82,30 +83,29 @@ export class OngController {
         if ( status )           whereConditions.status          = String(status);
 
         try{
-            const ongs = await ongRepository.findAll({
+            const ongs = await OngController.ongRepository.findAll({
                 where: whereConditions
             })
 
             return res.status(200).json(ongs);
-        }
-        catch ( e ) {
+        } catch (e) {
             console.error(`Ocorreu um erro: ${e}`)
             return res.status(500).json({ message: `Internal Error Server: ${e}` })
         }
     }
 
-    static async delete( req: Request, res: Response ): Promise<Response> {
+    static async delete( req: Request, res: Response ): Promise<Response>
+    {
         try {
             const { id } = req.params;
 
-            const ong = await ongRepository.findById(Number(id));
+            const ong = await OngController.ongRepository.findById(Number(id));
 
             if ( !ong ) return res.status(404).json({ message: `ONG não encontrada!` });
 
-            await ongRepository.remove(ong);
+            await OngController.ongRepository.remove(ong);
             return res.status(204).send();
-        }
-        catch ( e ) {
+        } catch (e) {
             console.error(`Ocorreu um erro: ${e}`)
             return res.status(500).json({ message: `Internal Error Server: ${e}` })
         }
