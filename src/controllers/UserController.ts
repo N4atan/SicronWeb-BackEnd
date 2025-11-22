@@ -1,107 +1,225 @@
-import { UserRepository } from "../repositories/UserRepository";
-import { Response, Request } from 'express';
-import { UserRole } from '../entities/User';
-import { User } from '../entities/User';
+import { Request, Response } from "express";
 
-const userRepository = new UserRepository();
+import { User } from "../entities/User";
+
+import { UserRepository } from "../repositories/UserRepository";
+import { TokenService   } from "../services/TokenService";
+import { RefreshService } from "../services/RefreshService";
+import { CryptService   } from "../services/CryptService";
 
 export class UserController {
-    static async register( req: Request, res: Response ): Promise<Response> {
+    private static userRepository = new UserRepository();
+
+    static async register(req: Request, res: Response): Promise<Response>
+    {
         try {
             const { username, email, password } = req.body;
+            if (!username || !email || !password)
+                return res.status(400).json({ message: "Os campos necessários não foram fornecidos!" });
 
-            if ( !username || !email || !password ) return res.status(400).json({ message: "Há campos em branco!" });
+            if (await UserController.userRepository.findByEmail(email))
+                return res.status(409).json({ message: "O E-Mail fornecido já possui registro!" });
 
-            const emailExists: User | null = await userRepository.findByEmail(email);
+            const hashed = await CryptService.hash(password);
+            const user = new User({ username, email, password: hashed });
 
-            if ( emailExists ) return res.status(409).json({ message: "Email já está em uso!" });
+            await UserController.userRepository.createAndSave(user);
 
-            const userCreated = await userRepository.createAndSave(new User({
-                username,
-                email,
-                password,
-            }))
+            if (!user.id)
+                return res.status(500).json("Erro interno desconhecido!");
 
-            return res.status(201).json({ userCreated })
-        }
-        catch ( e ) {
-            console.error(`Ocorreu um erro: ${e}`)
-            return res.status(500).json({ message: `Internal Error Server: ${e}` })
-        }
+            const tokens = TokenService.generateTokenPair({
+                id: user.id,
+                email: user.email
+            });
 
+            RefreshService.save(user.id, tokens.refreshToken);
 
-    }
+            res.cookie("refreshToken", tokens.refreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "strict",
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
 
-    static async show( req: Request, res: Response ): Promise<Response> {
-        try{
-            const { id } = req.params
-
-            const user = await userRepository.findById(Number(id));
-
-            if ( !user ) return res.status(404).json({ message: `Usuário não encontrado!` });
-
-            return res.json({user});
-        }
-        catch ( e ) {
-            console.error(`Ocorreu um erro: ${e}`)
-            return res.status(500).json({ message: `Internal Error Server: ${e}` })
+            return res.status(201).json();
+        } catch (e) {
+            console.error(`Erro: ${e}`);
+            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
         }
     }
 
-    static async list( req: Request, res: Response ): Promise<Response> {
-        try{
-            const users = await userRepository.findAll();
-            return res.json({users})
-        }
-        catch ( e ) {
-            console.error(`Ocorreu um erro: ${e}`)
-            return res.status(500).json({ message: `Internal Error Server: ${e}` })
-        }
-    }
-
-    static async delete( req: Request, res: Response ): Promise<Response> {
+    static async login(req: Request, res: Response): Promise<Response>
+    {
         try {
-            const { id } = req.params;
+            const { email, password } = req.body;
+            if (!email || !password)
+                return res.status(400).json({ message: "E-Mail ou senha não foram fornecidos!" });
 
-            const user = await userRepository.findById(Number(id));
+            const user = await UserController.userRepository.findByEmail(email);
+            if (!user || !user.id || !(await CryptService.compare(password, user.password)))
+                return res.status(404).json({ message: "E-Mail e/ou senha estão incorretos." });
 
-            if ( !user ) return res.status(404).json({ message: `Usuário não encontrado!` });
+            const tokens = TokenService.generateTokenPair({
+                id: user.id,
+                email: user.email
+            });
 
-            await userRepository.remove(user);
+            RefreshService.save(user.id, tokens.refreshToken);
+
+            res.cookie("refreshToken", tokens.refreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "strict",
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+
             return res.status(204).send();
-        }
-        catch ( e ) {
-            console.error(`Ocorreu um erro: ${e}`)
-            return res.status(500).json({ message: `Internal Error Server: ${e}` })
+        } catch (e) {
+            console.error(`Erro: ${e}`);
+            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
         }
     }
 
-    static async update( req: Request, res: Response ): Promise<Response> {
+    static async refresh(req: Request, res: Response): Promise<Response>
+    {
         try {
-            const { id } = req.params;
-            const { username, email, password } = req.body;
+            const user: User = req.body.user;
+            const token      = req.cookies.refreshToken;
 
-            const userExists = await userRepository.findById(Number(id));
-            if ( !userExists ) return res.status(404).json({ message: `Usuário não encontrado!` });
+            if (!token)
+                return res.status(401).json({ message: "Dados faltantes fornecidos ao serviço de autentificação!" });
 
-            if( username ) userExists.username = username;
-            if( password ) userExists.password = password;
-            if( email    ) {
-                const emailExists = await userRepository.findByEmail(email);
+            const payload: any = TokenService.verifyRefresh(token);
+            if (!RefreshService.isValid(payload.id, token) || user.id !== payload.id || !user.id)
+                return res.status(403).json({ message: "Dados inválidos fornecidos ao serviço de autentificação!" });
 
-                if ( emailExists && emailExists.id != userExists.id ) {
-                    return res.status(409).json({ message: "Email já está em uso" });
-                }
-                
-                userExists.email = email;
+            const newTokens = TokenService.generateTokenPair({
+                id: user.id,
+                email: user.email
+            });
+
+            RefreshService.save(user.id, newTokens.refreshToken);
+
+            res.cookie("refreshToken", newTokens.refreshToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: "strict",
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+
+            return res.status(204).send();
+        } catch (e) {
+            console.error(`Erro: ${e}`);
+            return res.status(403).json({ message: "Dados de autentificações inválidos ou expirados!" });
+        }
+    }
+
+    static async logout(req: Request, res: Response): Promise<Response>
+    {
+        try {
+            const token = req.cookies.refreshToken;
+            if (token) {
+                try {
+                    const payload: any = TokenService.verifyRefresh(token);
+                    RefreshService.revoke(payload.id);
+                } catch {}
             }
 
-            const updateUser = await userRepository.save(userExists);
-            return res.json({updateUser});
+            res.clearCookie("refreshToken", {
+                httpOnly: true,
+                secure: true,
+                sameSite: "strict"
+            });
+
+            return res.status(204).send();
+        } catch (e) {
+            console.error(`Erro: ${e}`);
+            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
         }
-        catch ( e ) {
-            console.error(`Ocorreu um erro: ${e}`)
-            return res.status(500).json({ message: `Internal Error Server: ${e}` })
+    }
+
+    static async show(req: Request, res: Response): Promise<Response>
+    {
+        try {
+            const { email } = req.params;
+            const user      = await UserController.userRepository.findByEmail(email);
+
+            if (!user)
+                return res.status(404).json({ message: "O usuário não foi encontrado!" });
+
+            return res.status(200).json({ user });
+        } catch (e) {
+            console.error(`Erro: ${e}`);
+            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
+        }
+    }
+
+    static async list(req: Request, res: Response): Promise<Response>
+    {
+        try {
+            const users = await UserController.userRepository.findAll();
+            return res.json({ users });
+        } catch (e) {
+            console.error(`Erro: ${e}`);
+            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
+        }
+    }
+
+    static async delete(req: Request, res: Response): Promise<Response>
+    {
+        try {
+            const user: User = req.body.user;
+            const targetUser = await UserController.userRepository.findByEmail(req.params.email ?? null);
+            
+            if (!targetUser || !targetUser.id)
+                return res.status(404).json({ message: "O usuário alvo não foi encontrado!" });
+            if (user.role !== "admin" && user.id !== targetUser.id)
+                return res.status(403).json({ message: "Permissão negada!" });
+
+            await UserController.userRepository.remove(targetUser);
+            RefreshService.revoke(targetUser.id);
+
+            return res.status(204).send();
+        } catch (e) {
+            console.error(`Erro: ${e}`);
+            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
+        }
+    }
+
+    static async update(req: Request, res: Response): Promise<Response> 
+    {
+        try {
+            const user: User = req.body.user;
+            const targetUser = await UserController.userRepository.findByEmail(req.params.email ?? null);
+            
+            if (!targetUser || !targetUser.id)
+                return res.status(404).json({ message: "O usuário alvo não foi encontrado!" });
+
+            if (user.role !== "admin" && user.id !== targetUser.id)
+                return res.status(403).json({ message: "Permissão negada!" });
+
+            const { newUsername, newEmail, newPassword } = req.body;
+            
+            if (newUsername) user.username = newUsername;
+            if (newPassword) user.password = await CryptService.hash(newPassword);
+
+            if (newEmail && newEmail !== user.email) {
+                if (await UserController.userRepository.findByEmail(newEmail))
+                    return res.status(409).json({ message: "O E-mail fornecido já está em uso!" });
+                user.email = newEmail;
+            }
+
+            const updated = await UserController.userRepository.save(user);
+            return res.status(200).json({
+                user: {
+                    email: updated.email,
+                    username: updated.username
+                }
+            });
+        } catch (e) {
+            console.error(`Erro: ${e}`);
+            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
         }
     }
 }

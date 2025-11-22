@@ -1,14 +1,14 @@
-
 import { AppDataSource } from "./config/data-source";
 import UserRoutes from './routers/UserRoutes';
 import OngRoutes from './routers/OngRoutes'
-import * as dotenv from "dotenv";
 import cors from 'cors';
 import express, { Application } from 'express';
+import cookieParser from "cookie-parser";
 
 const app: Application = express();
 const port: number = Number(process.env.PORT) || 3000;
 
+app.use(cookieParser());
 app.use(express.json());
 app.use(cors());
 

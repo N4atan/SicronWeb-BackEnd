@@ -1,53 +1,55 @@
 import { Collection, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 
-export enum ongStatus {
-    PENDENTE = 'pendente',
-    APROVADA = 'aprovada',
+export enum ongStatus
+{
+    PENDENTE  = 'pendente',
+    APROVADA  = 'aprovada',
     REJEITADA = 'rejeitada'
 }
 
 @Entity('ongs')
-export class Ong {
+export class Ong
+{
     @PrimaryGeneratedColumn()
-    id?:number;
+    public id?:number;
 
     @Column()
-    gestor_email: string;
+    public gestor_email: string;
 
     @Column({ unique: true })
-    razao_social: string;
+    public razao_social: string;
     
     @Column({ unique: true })
-    cnpj: string;
+    public cnpj: string;
 
     @Column()
-    nome_fantasia: string;
+    public nome_fantasia: string;
 
     @Column()
-    foco_principal: string;
+    public foco_principal: string;
     
     @Column()
-    objetivo: string;
+    public objetivo: string;
 
     @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
-    wallet!: number;
+    public wallet!: number;
 
     @Column({ length: 100 })
-    local: string;
+    public local: string;
 
     @Column({ length: 15 })
-    numero_telefone: string;
+    public numero_telefone: string;
 
     @Column({ length: 100 })
-    email_contato: string;
+    public email_contato: string;
 
     @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
-    criadaEm?: Date;
+    public criadaEm?: Date;
 
     @Column({ type: 'enum', enum: ongStatus, default: ongStatus.PENDENTE })
-    status!: ongStatus;
+    public status!: ongStatus;
 
-    constructor(
+    public constructor(
         manager_email: string,
         legal_name: string,
         business_name: string,
