@@ -41,6 +41,10 @@ app.use(rateLimit({
 app.use("/user", UserRoutes);
 app.use("/ngo",  NGORoutes); 
 
+app.get("/", (_req, res) => {
+    res.status(201).json({message: "Server is up."});
+});
+
 AppDataSource.initialize().then(() => {
     console.log("Data source has been initialized!");
     app.listen(port, () => {
