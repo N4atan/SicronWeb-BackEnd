@@ -1,4 +1,5 @@
 import { BeforeInsert, BeforeUpdate, AfterLoad, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { v4 as uuidv4 } from "uuid";
 
 import { CryptService } from "../services/CryptService";
 
@@ -10,23 +11,26 @@ export enum UserRole
     PROVIDER_MANAGER = 'providerManager'
 }
 
-@Entity('users')
+@Entity('usertbl')
 export class User
 {
     @PrimaryGeneratedColumn()
-    id?: number;
+    public id?: number;
 
-    @Column({ length: 100 })
-    username!: string;
+    @Column({unique: true, length: 36})
+    public uuid!: string;
 
-    @Column({ length: 100, unique: true })
-    email!: string;
+    @Column({ length: 127 })
+    public username!: string;
+
+    @Column({ length: 255, unique: true })
+    public email!: string;
 
     @Column({ length: 255 })
-    password!: string;
+    public password!: string;
 
     @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
-    role!: UserRole;
+    public role!: UserRole;
 
     private previous_password!: string;
 
@@ -37,6 +41,9 @@ export class User
         if (this.password === this.previous_password) return;
         this.password = await CryptService.hash(this.password);
     }
+
+    @BeforeInsert()
+    private generateUUID() { if (!this.uuid) this.uuid = uuidv4(); }
 
     @AfterLoad()
     private loadPreviousPassword(): void

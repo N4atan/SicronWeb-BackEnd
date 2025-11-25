@@ -1,27 +1,51 @@
-import { AppDataSource } from "./config/data-source";
-import UserRoutes from './routers/UserRoutes';
-import OngRoutes from './routers/OngRoutes'
-import cors from 'cors';
 import express, { Application } from 'express';
-import cookieParser from "cookie-parser";
+import cookieParser             from "cookie-parser";
+import cors                     from 'cors';
+import helmet                   from 'helmet';
+import rateLimit                from 'express-rate-limit';
 
-const app: Application = express();
-const port: number = Number(process.env.PORT) || 3000;
+import { AppDataSource } from "./config/data-source";
+
+import UserRoutes from './routers/UserRoutes';
+import NGORoutes  from './routers/NGORoutes';
+
+const app:  Application = express();
+const port: number      = Number(process.env.PORT) || 3000;
+
+app.set('trust proxy', true);
 
 app.use(cookieParser());
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin:      process.env.CLIENT_ORIGIN || "https://sicronweb-backend.onrender.com",
+    credentials: true
+}));
 
-app.use("/api", UserRoutes);
-app.use('/api', OngRoutes);
+app.use(helmet({
+	contentSecurityPolicy: {
+		directives: {
+			defaultSrc: ["'self'"]
+		}
+	},
+	crossOriginEmbedderPolicy: false
+}));
 
-AppDataSource.initialize()
-  .then(() => {
-    console.log("Data Source has been initialized!");
+app.use(rateLimit({
+	windowMs:        15 * 60 * 1000,
+	max:             100,
+	standardHeaders: true,
+	legacyHeaders:   false,
+	message: { message: "Muitas requisições. Tente novamente mais tarde." }
+}));
+
+app.use("/user", UserRoutes);
+app.use("/ngo",  NGORoutes); 
+
+AppDataSource.initialize().then(() => {
+    console.log("Data source has been initialized!");
     app.listen(port, () => {
-      console.log(`Server is running on port ${port}`);
+        console.log("Serving is running on port: " + port);
     });
-  })
-  .catch((err) => {
-    console.error("Error during Data Source initialization:", err);
-  });
+}).catch((e) => {
+    console.error("INIT ERROR: " + e);
+});

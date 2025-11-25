@@ -8,38 +8,43 @@ export class UserRepository
 {
     private repository: Repository<User>;
 
-    constructor()
+    public constructor()
     {
-        this.repository = AppDataSource.getRepository('users');
+        this.repository = AppDataSource.getRepository('usertbl');
     }
 
-    async createAndSave( data: Partial<User> ): Promise<User>
+    public async createAndSave( data: Partial<User> ): Promise<User>
     {
         const user = this.repository.create(data);
         return this.repository.save(user);
     }
 
-    async findAll(options?: FindManyOptions<User>): Promise<User[]>
+    public async findAll(options?: FindManyOptions<User>): Promise<User[]>
     {
         return this.repository.find(options);
     }
 
-    async findById(id: number): Promise<User | null>
+    public async findById(id: number): Promise<User | null>
     {
         return this.repository.findOneBy({ id });
     }
+    
+    public async findByUUID(uuid: string): Promise<User | null>
+    {
+        return this.repository.findOneBy({ uuid });
+    }
 
-    async findByEmail(email: string): Promise<User | null>
+    public async findByEmail(email: string): Promise<User | null>
     {
         return this.repository.findOneBy({ email })
     }
 
-    async save(user: User): Promise<User>
+    public async save(user: User): Promise<User>
     {
         return this.repository.save(user);
     }
 
-    async remove(user: User): Promise<User>
+    public async remove(user: User): Promise<User>
     {
         return this.repository.remove(user);
     }

@@ -1,0 +1,32 @@
+import { Request, Response, NextFunction } from "express";
+
+import { RefreshTokenService } from "../services/RefreshTokenService";
+import { TokenService        } from "../services/TokenService";
+import { UserRepository      } from "../repositories/UserRepository";
+
+const userRepo = new UserRepository();
+
+export async function loginChecker(req: Request, res: Response, next: NextFunction)
+{
+    (req.body as { user?: User | null }).user = null;
+    (req.body as { logged: boolean    }).logged = false;
+    
+    try {
+        const token = req.cookies.accessToken;
+	if (!token) return next();
+
+        const payload: any = TokenService.verifyAccess(token);
+	if (!payload?.id) return next(); 
+
+        const user = await userRepo.findById(payload.id);
+        if (!user?.id) return next(); 
+	
+	if (!RefreshTokenService.isValid(user.id, req.cookies.refreshToken, req.ip)) return next();
+
+        req.body.user   = user;
+	req.body.logged = true; 
+        next();
+    } catch {
+        next();
+    }
+}
