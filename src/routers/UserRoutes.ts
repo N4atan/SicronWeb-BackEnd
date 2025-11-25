@@ -2,9 +2,9 @@ import { Router } from "express";
 
 import { UserController } from "../controllers/UserController";
 
-import { loginChecker    } from "../middlewares/loginChecker.ts";
-import { loginRequire    } from "../middlewares/loginRequire.ts";
-import { loginPrivillege } from "../middlewares/loginPrivillege.ts";
+import { loginChecker    } from "../middlewares/loginChecker";
+import { loginRequire    } from "../middlewares/loginRequire";
+import { loginPrivillege } from "../middlewares/loginPrivillege";
 
 let router: Router = Router();
 

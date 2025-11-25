@@ -68,12 +68,8 @@ export class NGOController {
 
     static async update(req: Request, res: Response): Promise<Response> {
         try {
-            const { uuid } = req.params;
-            const target = await NGOController.ngoRepository['repository'].findOneBy({ uuid });
-
+	    const target: NGO = req.body.target;
             if (!target) return res.status(404).json({ message: "ONG não encontrada!" });
-            if (target.manager_uuid !== req.body.user.uuid)
-                return res.status(403).json({ message: "Permissão negada!" });
 
             const {
                 name,
@@ -106,11 +102,10 @@ export class NGOController {
 
     static async delete(req: Request, res: Response): Promise<Response> {
         try {
-            const { uuid } = req.params;
-            const target = await NGOController.ngoRepository['repository'].findOneBy({ uuid });
-
+            const target: NGO = req.body.target; 
             if (!target) return res.status(404).json({ message: "ONG não encontrada!" });
-            if (target.manager_uuid !== req.body.user.uuid && req.body.user.role !== "admin")
+            
+	    if (target.manager_uuid !== req.body.user.uuid && req.body.user.role !== "admin")
                 return res.status(403).json({ message: "Permissão negada!" });
 
             await NGOController.ngoRepository['repository'].remove(target);

@@ -3,6 +3,8 @@ import { Request, Response, NextFunction } from "express";
 import { TokenService             } from "../services/TokenService";
 import { UserRepository, UserRole } from "../repositories/UserRepository";
 
+const userRepo = new UserRepository();
+
 export async function loginPrivillege(req: Request, res: Response, next: NextFunction)
 {
     try {
