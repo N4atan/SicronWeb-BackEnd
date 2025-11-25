@@ -5,9 +5,12 @@ import { UserRepository } from "../repositories/UserRepository";
 
 const userRepo = new UserRepository();
 
-export async function auth(req: Request, res: Response, next: NextFunction)
+export async function loginRequire(req: Request, res: Response, next: NextFunction)
 {
-    try {
+    if (!req.body.logged || !req.body.user)
+	    return res.status(401).json({ message: "Dados de autentificação não fornecidos, inválidos ou expirados!" });
+    next();
+/*    try {
         const accessToken = req.cookies.accessToken;
         if (!accessToken) return res.status(401).json({ message: "Autentificação necessária!" });
 
@@ -20,6 +23,5 @@ export async function auth(req: Request, res: Response, next: NextFunction)
         req.body.user = user;
         next();
     } catch (err) {
-        return res.status(401).json({ message: "Dados de autentificação inválidos ou expirados!" });
-    }
+    }*/
 }

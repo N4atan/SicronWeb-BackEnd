@@ -1,16 +1,28 @@
 import { Router } from "express";
+
 import { UserController } from "../controllers/UserController";
 
+import { loginChecker    } from "../middlewares/loginChecker.ts";
+import { loginRequire    } from "../middlewares/loginRequire.ts";
+import { loginPrivillege } from "../middlewares/loginPrivillege.ts";
 
 let router: Router = Router();
 
-router.get("/users/:id", UserController.show);
-router.delete("/users/:id", UserController.delete);
-router.put("/users/:id", UserController.update)
+router.use(loginChecker);
 
+router.get("/",            UserController.query);
+router.post("/",           UserController.register);
+router.post("/auth/login", UserController.login);
 
-router.post("/users", UserController.register);
-router.get("/users", UserController.list);
+router.use(loginRequire);
 
+router.post("/auth/refresh",  UserController.refresh);
+router.post("/auth/check",    UserController.isLogged);
+router.post("/auth/logout",   UserController.logout);
+
+router.use(loginPrivillege);
+
+router.delete("/:uuid?", UserController.delete);
+router.patch("/:uuid?",  UserController.update);
 
 export default router;
