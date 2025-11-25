@@ -25,7 +25,7 @@ export class NGO
     @Column({ unique: true })
     public cnpj: string;
 
-    @Column()
+    @Column({ unique: true})
     public trade_name: string;
 
     @Column()
