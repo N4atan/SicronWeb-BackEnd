@@ -17,14 +17,14 @@ export class NGORepository
     private async findAll(options?: FindManyOptions<NGO>): Promise<NGO[]> { return this.repository.find(options); }
 
     private async findByID(id: number): Promise<NGO | null>     { return this.repository.findOneBy({ id });   }
-    private async findByUUID(uuid: string): Promise<NGO | null> { return this.repository.findOneBy({ uuid }); }
-
-    private async findByName(name: string): Promise<NGO | null>
+    
+    public async findByUUID(uuid: string): Promise<NGO | null> { return this.repository.findOneBy({ uuid }); }
+    public async findByName(name: string): Promise<NGO | null>
     {
         return this.repository.findOneBy({ name });
     }
 
-    async findByTradeName(trade_name: string): Promise<NGO | null>
+    public async findByTradeName(trade_name: string): Promise<NGO | null>
     {
         return this.repository.findOneBy({ trade_name });
     }

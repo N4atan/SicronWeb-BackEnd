@@ -1,7 +1,7 @@
 import { BeforeInsert, BeforeUpdate, AfterLoad, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
-import { v4 as uuidv4 } from "uuid";
 
 import { CryptService } from "../services/CryptService";
+import { randomUUID } from "crypto";
 
 export enum UserRole
 {
@@ -43,7 +43,7 @@ export class User
     }
 
     @BeforeInsert()
-    private generateUUID() { if (!this.uuid) this.uuid = uuidv4(); }
+    private generateUUID() { if (!this.uuid) this.uuid = randomUUID(); }
 
     @AfterLoad()
     private loadPreviousPassword(): void
@@ -53,6 +53,8 @@ export class User
 
     public constructor(user?: Partial<User>)
     {
+        this.uuid = randomUUID();
+        
         if (!user) return;
         Object.assign(this, user);
     }
