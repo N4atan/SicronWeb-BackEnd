@@ -22,7 +22,7 @@ router.post("/auth/logout",   UserController.logout);
 
 router.use(loginPrivillege);
 
-router.delete("/:uuid?", UserController.delete);
-router.patch("/:uuid?",  UserController.update);
+router.delete("/:uuid", UserController.delete);
+router.patch("/:uuid",  UserController.update);
 
 export default router;

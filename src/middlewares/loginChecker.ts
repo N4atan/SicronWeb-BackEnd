@@ -1,8 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 
-import { RefreshTokenService } from "../services/RefreshTokenService";
-import { TokenService        } from "../services/TokenService";
-import { UserRepository      } from "../repositories/UserRepository";
+import { User } from "../entities/User";
+
+import { RefreshService } from "../services/RefreshService";
+import { TokenService   } from "../services/TokenService";
+
+import { UserRepository } from "../repositories/UserRepository";
 
 const userRepo = new UserRepository();
 
@@ -21,7 +24,7 @@ export async function loginChecker(req: Request, res: Response, next: NextFuncti
         const user = await userRepo.findById(payload.id);
         if (!user?.id) return next(); 
 	
-	if (!RefreshTokenService.isValid(user.id, req.cookies.refreshToken, req.ip)) return next();
+	if (!RefreshService.isValid(user.id, req.cookies.refreshToken, req.ip)) return next();
 
         req.body.user   = user;
 	req.body.logged = true; 

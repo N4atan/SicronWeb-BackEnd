@@ -1,4 +1,5 @@
-import { Collection, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, BeforeInsert } from "typeorm";
+import { randomUUID } from "crypto";
 
 export enum NGOStatus 
 {
@@ -53,13 +54,14 @@ export class NGO
     public status!: NGOStatus;
     
     @BeforeInsert()
-    private generateUUID(): void { if (!this.uuid) this.uuid = uuidv4(); }
+    private generateUUID(): void { if (!this.uuid) this.uuid = randomUUID(); }
 
     public constructor(
 	manager_uuid: string, name:   string, trade_name: string, area:         string, description:   string,
 	cnpj:         string, wallet: number, local:      string, phone_number: string, contact_email: string
     ) {
-        this.manager_uuid  = manager_uuid;
+    this.manager_uuid  = manager_uuid;
+    this.uuid          = randomUUID();
 	this.name          = name;
 	this.trade_name    = trade_name;
 	this.area          = area;
