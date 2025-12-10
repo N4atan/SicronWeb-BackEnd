@@ -14,8 +14,9 @@ export class RefreshService {
         RefreshStore.push({ userId, token, ip });
     }
 
-    static isValid(userId: number, token: string, ip: string): boolean
+    static isValid(userId: number, token: string, ip: string | undefined): boolean
     {
+        if (!ip) return false;
         return RefreshStore.some(r => r.userId === userId && r.token === token && r.ip === ip);
     }
 
