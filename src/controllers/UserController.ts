@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-
 import { User, UserRole } from "../entities/User";
-
 import { UserRepository } from "../repositories/UserRepository";
-import { TokenService   } from "../services/TokenService";
+import { TokenService } from "../services/TokenService";
 import { RefreshService } from "../services/RefreshService";
-import { CryptService   } from "../services/CryptService";
+import { CryptService } from "../services/CryptService";
 
 export class UserController {
     private static userRepository = new UserRepository();
@@ -14,11 +12,11 @@ export class UserController {
     {
         try {
             const { username, email, password } = req.body;
-	    
-	    if (req.body.logged || req.body.user)
-		return res.status(403).json({ message: "Permissão negada!" });
+        
+            if (req.body.logged || req.body.user)
+                return res.status(403).json({ message: "Permissão negada!" });
             if (!username || !email || !password)
-		    return res.status(400).json({ message: "Os campos necessários não foram fornecidos!" });
+                return res.status(400).json({ message: "Os campos necessários não foram fornecidos!" });
 
             if (await UserController.userRepository.findByEmail(email))
                 return res.status(409).json({ message: "O E-Mail fornecido já possui registro!" });
@@ -29,8 +27,8 @@ export class UserController {
             await UserController.userRepository.createAndSave(user);
             if (!user.id) return res.status(500).json("Erro interno desconhecido!");
 
-	    user.password = user.id = undefined;
-	    return res.status(201).location(`/users/${user.uuid}`).json(user);
+            (user as any).password = (user as any).id = undefined;
+            return res.status(201).location(`/users/${user.uuid}`).json(user);
         } catch (e) {
             console.error(`\n\n---> ERROR: ${e}`);
             return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
@@ -39,7 +37,7 @@ export class UserController {
 
     static async isLogged(req: Request, res: Response): Promise<Response>
     {
-	return (req.body.logged || req.body.user) ? res.status(200).send() : res.status(401).send();
+        return (req.body.logged || req.body.user) ? res.status(200).send() : res.status(401).send();
     }
 
     static async login(req: Request, res: Response): Promise<Response>
@@ -58,7 +56,7 @@ export class UserController {
                 email: user.email
             });
 
-            RefreshService.save(user.id, tokens.refreshToken, req.ip);
+            RefreshService.save(user.id, tokens.refreshToken, req.ip || "");
 
             res.cookie("refreshToken", tokens.refreshToken, {
                 httpOnly: true,
@@ -66,8 +64,8 @@ export class UserController {
                 sameSite: "strict",
                 maxAge: 7 * 24 * 60 * 60 * 1000
             });
-	    
-	    res.cookie("accessToken", tokens.accessToken, {
+        
+            res.cookie("accessToken", tokens.accessToken, {
                 httpOnly: true,
                 secure: true,
                 sameSite: "strict",
@@ -88,7 +86,7 @@ export class UserController {
             const token: string = req.cookies.refreshToken;
 
             const payload: any = TokenService.verifyRefresh(token);
-            if (!RefreshService.isValid(payload.id, token, req.ip) || user.id !== payload.id || !user.id)
+            if (!RefreshService.isValid(payload.id, token, req.ip || "") || user.id !== payload.id || !user.id)
                 return res.status(403).json({ message: "Dados inválidos fornecidos ao serviço de autentificação!" });
 
             const newTokens = TokenService.generateTokenPair({
@@ -96,8 +94,8 @@ export class UserController {
                 email: user.email
             });
 
-	    RefreshService.revoke(user.id, req.ip);
-            RefreshService.save(user.id, newTokens.refreshToken, req.ip);
+            RefreshService.revoke(user.id, req.ip || "");
+            RefreshService.save(user.id, newTokens.refreshToken, req.ip || "");
 
             res.cookie("refreshToken", newTokens.refreshToken, {
                 httpOnly: true,
@@ -105,8 +103,8 @@ export class UserController {
                 sameSite: "strict",
                 maxAge: 7 * 24 * 60 * 60 * 1000
             });
-	    
-	    res.cookie("accessToken", tokens.accessToken, {
+        
+            res.cookie("accessToken", newTokens.accessToken, {
                 httpOnly: true,
                 secure: true,
                 sameSite: "strict",
@@ -127,7 +125,7 @@ export class UserController {
             if (token) {
                 try {
                     const payload: any = TokenService.verifyRefresh(token);
-                    RefreshService.revoke(payload.id, req.ip);
+                    RefreshService.revoke(payload.id, req.ip || "");
                 } catch {}
             }
 
@@ -150,19 +148,19 @@ export class UserController {
             const user  = req.body.user;
             const { uuid, email, name } = req.query;
             
-	    const filters: any = {};
+            const filters: any = {};
 
-            if (uuid)                                   filters.uuid  = String(uuid);
+            if (uuid)                               filters.uuid  = String(uuid);
             if (email && user?.role !== UserRole.ADMIN) filters.email = String(email);
-            if (username)                               filters.name  = String(name);
+            if (name)                               filters.name  = String(name);
 
             const users = await UserController.userRepository.findAll({ where: filters });
 
             users.forEach(u => {
-                if (user?.role !== UserRole.ADMIN && user?.id !== u.id) u.email = undefined;
+                if (user?.role !== UserRole.ADMIN && user?.id !== u.id) (u as any).email = undefined;
 
-                u.password = undefined;
-                u.id       = undefined;
+                (u as any).password = undefined;
+                (u as any).id       = undefined;
             });
 
             return res.status(200).json({ users });
@@ -179,7 +177,7 @@ export class UserController {
             const target: User = req.body.target;
 
             await UserController.userRepository.remove(target);
-            RefreshService.revoke(target.id);
+            if (target.id) RefreshService.revoke(target.id);
 
             return res.status(204).send();
         } catch (e) {
@@ -195,24 +193,23 @@ export class UserController {
             const target: User = req.body.target; 
             
             const { newUsername, newEmail, newPassword } = req.body;
-	    
-	    if (newEmail && newEmail !== target.email && await UserController.userRepository.findByEmail(newEmail))
-		return res.status(409).json({ message: "O E-mail fornecido já está em uso!" });
+        
+            if (newEmail && newEmail !== target.email && await UserController.userRepository.findByEmail(newEmail))
+                return res.status(409).json({ message: "O E-mail fornecido já está em uso!" });
             
             if (newUsername) target.username = newUsername;
-//            if (newPassword) target.password = await CryptService.hash(newPassword);
-// auto-done by notations
-            if (newPassword) {
-		    target.password = newPassword;
-		    RefreshService.revoke(target.id);
-	    }
 
-	    if (newEmail)    target.email    = newEmail;
+            if (newPassword) {
+                target.password = newPassword;
+                if (target.id) RefreshService.revoke(target.id);
+            }
+
+            if (newEmail)    target.email    = newEmail;
 
             const updated = await UserController.userRepository.save(target);
-	    if (newPassword && updated) return UserController.refresh(req, res);
-	    return res.status(204).send();
-	} catch (e) {
+            if (newPassword && updated) return UserController.refresh(req, res);
+            return res.status(204).send();
+        } catch (e) {
             console.error(`\n\n---> ERROR: ${e}`);
             return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
         }
