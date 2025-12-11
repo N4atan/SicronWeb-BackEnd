@@ -13,7 +13,7 @@ export class UserController {
         try {
             const { username, email, password } = req.body;
         
-            if (req.body.logged || req.body.user)
+            if (req.logged || req.user)
                 return res.status(403).json({ message: "Permissão negada!" });
             if (!username || !email || !password)
                 return res.status(400).json({ message: "Os campos necessários não foram fornecidos!" });
@@ -25,7 +25,6 @@ export class UserController {
             const user = new User({ username, email, password: hashed });
 
             await UserController.userRepository.createAndSave(user);
-            if (!user.id) return res.status(500).json("Erro interno desconhecido!");
 
             (user as any).password = (user as any).id = undefined;
             return res.status(201).location(`/users/${user.uuid}`).json(user);
@@ -37,7 +36,7 @@ export class UserController {
 
     static async isLogged(req: Request, res: Response): Promise<Response>
     {
-        return (req.body.logged || req.body.user) ? res.status(200).send() : res.status(401).send();
+        return (req.logged || req.user) ? res.status(200).send() : res.status(401).send();
     }
 
     static async login(req: Request, res: Response): Promise<Response>
@@ -82,7 +81,7 @@ export class UserController {
     static async refresh(req: Request, res: Response): Promise<Response>
     {
         try {
-            const user: User    = req.body.user;
+            const user: User    = req.user;
             const token: string = req.cookies.refreshToken;
 
             const payload: any = TokenService.verifyRefresh(token);
@@ -145,7 +144,7 @@ export class UserController {
     static async query(req: Request, res: Response): Promise<Response>
     {
         try {
-            const user  = req.body.user;
+            const user  = req.user;
             const { uuid, email, name } = req.query;
             
             const filters: any = {};
@@ -173,8 +172,8 @@ export class UserController {
     static async delete(req: Request, res: Response): Promise<Response>
     {
         try {
-            const user:   User = req.body.user;
-            const target: User = req.body.target;
+            const user:   User = req.user;
+            const target: User = req.target;
 
             await UserController.userRepository.remove(target);
             if (target.id) RefreshService.revoke(target.id);
@@ -189,8 +188,8 @@ export class UserController {
     static async update(req: Request, res: Response): Promise<Response> 
     {
         try {
-            const user:   User = req.body.user;
-            const target: User = req.body.target; 
+            const user:   User = req.user;
+            const target: User = req.target; 
             
             const { newUsername, newEmail, newPassword } = req.body;
         

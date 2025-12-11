@@ -15,7 +15,7 @@ export class NGO
     public id?:number;
 
     @Column({unique: true, length: 36})
-    public uuid?: string;
+    public uuid!: string;
 
     @Column()
     public manager_uuid: string;

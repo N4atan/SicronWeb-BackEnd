@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Teste API UserController</title>
+</head>
+<body>
+<h2>Teste API UserController</h2>
+
+<section>
+  <h3>Registro / Login</h3>
+  <input id="username" placeholder="Usuário">
+  <input id="email" placeholder="E-mail">
+  <input id="password" type="password" placeholder="Senha">
+  <button onclick="register()">Registrar</button>
+  <button onclick="login()">Login</button>
+</section>
+
+<section>
+  <h3>Autenticação</h3>
+  <button onclick="refresh()">Refresh</button>
+  <button onclick="check()">Check</button>
+  <button onclick="logout()">Logout</button>
+</section>
+
+<section>
+  <h3>Consulta / Alteração / Deleção</h3>
+  <input id="uuid" placeholder="UUID">
+  <input id="name" placeholder="Nome para filtro">
+  <input id="filterEmail" placeholder="Email para filtro">
+  <input id="newUsername" placeholder="Novo Usuário">
+  <input id="newEmail" placeholder="Novo Email">
+  <input id="newPassword" placeholder="Nova Senha">
+  <button onclick="query()">Consultar usuários</button>
+  <button onclick="update()">Atualizar usuário</button>
+  <button onclick="del()">Deletar usuário</button>
+</section>
+
+<pre id="out" style="background:#111; color:#0f0; padding:10px; white-space:pre-wrap"></pre>
+
+<script>
+const base = "http://localhost:3000";
+const out = document.getElementById("out");
+
+async function fetchAPI(path, method="GET", body) {
+  try {
+    const res = await fetch(base + path, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const text = await res.text();
+    try { out.textContent = JSON.stringify(JSON.parse(text), null, 2); }
+    catch { out.textContent = text || "(vazio)"; }
+  } catch(e) {
+    out.textContent = "Erro: " + e;
+  }
+}
+
+// Registro
+function register() {
+  fetchAPI("/", "POST", {
+    username: username.value,
+    email: email.value,
+    password: password.value
+  });
+}
+
+// Login
+function login() {
+  fetchAPI("/auth/login", "POST", {
+    email: email.value,
+    password: password.value
+  });
+}
+
+// Refresh
+function refresh() { fetchAPI("/auth/refresh", "POST"); }
+
+// Check login
+function check() { fetchAPI("/auth/check", "POST"); }
+
+// Logout
+function logout() { fetchAPI("/auth/logout", "POST"); }
+
+// Query
+function query() {
+  const params = new URLSearchParams();
+  if (uuid.value) params.append("uuid", uuid.value);
+  if (filterEmail.value) params.append("email", filterEmail.value);
+  if (name.value) params.append("name", name.value);
+  fetchAPI("/?" + params.toString(), "GET");
+}
+
+// Update
+function update() {
+  fetchAPI("/" + uuid.value, "PATCH", {
+    newUsername: newUsername.value,
+    newEmail: newEmail.value,
+    newPassword: newPassword.value
+  });
+}
+
+// Delete
+function del() {
+  fetchAPI("/" + uuid.value, "DELETE");
+}
+</script>
+</body>
+</html>

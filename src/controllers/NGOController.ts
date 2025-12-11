@@ -26,7 +26,7 @@ export class NGOController {
             const exists = await NGOController.ngoRepository.findByTradeName(trade_name);
             if (exists) return res.status(409).json({ message: "Já existe uma ONG com esse nome fantasia!" });
 
-            const manager_uuid = req.body.user.uuid;
+            const manager_uuid = req.user.uuid;
             const ngo = new NGO(
                 manager_uuid,
                 name,
@@ -68,8 +68,8 @@ export class NGOController {
 
     static async update(req: Request, res: Response): Promise<Response> {
         try {
-	    const target: NGO = req.body.target;
-            if (!target) return res.status(404).json({ message: "ONG não encontrada!" });
+	    const ngo: NGO = req.ngo;
+            if (!ngo) return res.status(404).json({ message: "ONG não encontrada!" });
 
             const {
                 name,
@@ -82,17 +82,17 @@ export class NGOController {
                 status
             } = req.body;
 
-            if (name)          target.name          = name;
-            if (trade_name)    target.trade_name    = trade_name;
-            if (area)          target.area          = area;
-            if (description)   target.description   = description;
-            if (local)         target.local         = local;
-            if (phone_number)  target.phone_number  = phone_number;
-            if (contact_email) target.contact_email = contact_email;
-            if (status && req.body.user.role === "admin")
-                target.status = status;
+            if (name)          ngo.name          = name;
+            if (trade_name)    ngo.trade_name    = trade_name;
+            if (area)          ngo.area          = area;
+            if (description)   ngo.description   = description;
+            if (local)         ngo.local         = local;
+            if (phone_number)  ngo.phone_number  = phone_number;
+            if (contact_email) ngo.contact_email = contact_email;
+            if (status && req.user.role === "admin")
+                ngo.status = status;
 
-            await NGOController.ngoRepository['repository'].save(target);
+            await NGOController.ngoRepository['repository'].save(ngo);
             return res.status(204).send();
         } catch (e) {
             console.error(`\n\n---> ERROR: ${e}`);
@@ -102,13 +102,13 @@ export class NGOController {
 
     static async delete(req: Request, res: Response): Promise<Response> {
         try {
-            const target: NGO = req.body.target; 
-            if (!target) return res.status(404).json({ message: "ONG não encontrada!" });
+            const ngo: NGO = req.ngo; 
+            if (!ngo) return res.status(404).json({ message: "ONG não encontrada!" });
             
-	    if (target.manager_uuid !== req.body.user.uuid && req.body.user.role !== "admin")
+	    if (ngo.manager_uuid !== req.user.uuid && req.user.role !== "admin")
                 return res.status(403).json({ message: "Permissão negada!" });
 
-            await NGOController.ngoRepository['repository'].remove(target);
+            await NGOController.ngoRepository['repository'].remove(ngo);
             return res.status(204).send();
         } catch (e) {
             console.error(`\n\n---> ERROR: ${e}`);
