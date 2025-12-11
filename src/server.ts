@@ -12,16 +12,15 @@ import NGORoutes  from './routers/NGORoutes';
 const app:  Application = express();
 const port: number      = Number(process.env.PORT) || 3000;
 
-app.set('trust proxy', true);
+//app.set('trust proxy', true);
 
 app.use(cookieParser());
 app.use(express.json());
 app.use(cors({
-    origin:      process.env.CLIENT_ORIGIN || "https://sicronweb-backend.onrender.com",
-    credentials: true
-}));
-
-app.use(helmet({
+	origin: (origin, callback) => callback(null, origin || true),
+	credentials: true,
+  }));  
+/*app.use(helmet({
 	contentSecurityPolicy: {
 		directives: {
 			defaultSrc: ["'self'"]
@@ -36,7 +35,7 @@ app.use(rateLimit({
 	standardHeaders: true,
 	legacyHeaders:   false,
 	message: { message: "Muitas requisições. Tente novamente mais tarde." }
-}));
+}));*/
 
 app.use("/user", UserRoutes);
 app.use("/ngo",  NGORoutes); 

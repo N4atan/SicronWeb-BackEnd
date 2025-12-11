@@ -32,29 +32,20 @@ export class User
     @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
     public role!: UserRole;
 
-    private previous_password!: string;
-
     @BeforeInsert()
     @BeforeUpdate()
     private async hashPassword(): Promise<void>
     {
-        if (this.password === this.previous_password) return;
         this.password = await CryptService.hash(this.password);
     }
 
     @BeforeInsert()
     private generateUUID() { if (!this.uuid) this.uuid = randomUUID(); }
 
-    @AfterLoad()
-    private loadPreviousPassword(): void
-    {
-        this.previous_password = this.password;
-    }
-
     public constructor(user?: Partial<User>)
     {
         this.uuid = randomUUID();
-        
+
         if (!user) return;
         Object.assign(this, user);
     }

@@ -11,8 +11,8 @@ const userRepo = new UserRepository();
 
 export async function loginChecker(req: Request, res: Response, next: NextFunction)
 {
-    (req.body as { user?: User | null }).user = null;
-    (req.body as { logged: boolean    }).logged = false;
+    req.user = null;
+    req.logged = false;
     
     try {
         const token = req.cookies.accessToken;
@@ -26,8 +26,8 @@ export async function loginChecker(req: Request, res: Response, next: NextFuncti
 	
 	if (!RefreshService.isValid(user.id, req.cookies.refreshToken, req.ip)) return next();
 
-        req.body.user   = user;
-	req.body.logged = true; 
+        req.user   = user;
+	req.logged = true; 
         next();
     } catch {
         next();

@@ -4,6 +4,9 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
+import { User } from "../entities/User";
+import { NGO  } from "../entities/NGO";
+
 const { DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME } = process.env;
 
 export const AppDataSource = new DataSource({
@@ -15,5 +18,5 @@ export const AppDataSource = new DataSource({
     database: DB_NAME,
     synchronize: true,
     logging: true,
-    entities: ["src/entities/*.ts"]
+    entities: [User, NGO]
 });
