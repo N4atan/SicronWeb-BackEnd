@@ -26,7 +26,7 @@ export class NGOController {
             const exists = await NGOController.ngoRepository.findByTradeName(trade_name);
             if (exists) return res.status(409).json({ message: "Já existe uma ONG com esse nome fantasia!" });
 
-            const manager_uuid = req.user.uuid;
+            const manager_uuid = req.user!.uuid;
             const ngo = new NGO(
                 manager_uuid,
                 name,

@@ -1,3 +1,5 @@
+export {}; // <--- ADICIONA ISTO PARA TORNAR O FICHEIRO UM MÓDULO
+
 declare global {
     namespace Express {
       interface Request {

@@ -18,7 +18,7 @@ export async function loginManagerPrivillege(req: Request, res: Response, next: 
 	if (!target?.id)
                 return res.status(404).json({ message: "A ONG alvo não foi encontrada!" });
 	
-	req.ong = target;
+	req.ngo = target;
 	next();	
     } catch (e) {
 	console.error(`---> AUTH ERR: ${e}`);
