@@ -26,8 +26,7 @@ export class UserController {
 
             await UserController.userRepository.createAndSave(user);
 
-            (user as any).password = (user as any).id = undefined;
-            return res.status(201).location(`/users/${user.uuid}`).json(user);
+            return res.status(201).location(`/users/${user.uuid}`).send();
         } catch (e) {
             console.error(`\n\n---> ERROR: ${e}`);
             return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
