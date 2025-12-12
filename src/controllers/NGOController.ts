@@ -68,7 +68,7 @@ export class NGOController {
 
     static async update(req: Request, res: Response): Promise<Response> {
         try {
-	    const ngo: NGO = req.ngo;
+	        const ngo: NGO = req.ngo;
             if (!ngo) return res.status(404).json({ message: "ONG não encontrada!" });
 
             const {
