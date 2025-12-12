@@ -45,6 +45,10 @@ export class UserController {
             if (!email || !password)
                 return res.status(400).json({ message: "E-Mail ou senha não foram fornecidos!" });
 
+            
+
+            const user = await UserController.userRepository.findByEmail(email);
+
             // LOGS PARA DEBUG
             console.log("Email recebido:", email);
             console.log("Usuário encontrado:", user ? "SIM" : "NÃO");
@@ -55,7 +59,7 @@ export class UserController {
             }
             // FIM LOGS
 
-            const user = await UserController.userRepository.findByEmail(email);
+            
             if (!user || !user.id || !(await CryptService.compare(password, user.password)))
                 return res.status(404).json({ message: "E-Mail e/ou senha estão incorretos." });
 
@@ -224,3 +228,4 @@ export class UserController {
     }
 
 }
+
