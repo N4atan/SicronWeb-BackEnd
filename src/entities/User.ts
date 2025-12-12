@@ -1,4 +1,4 @@
-import { BeforeInsert, BeforeUpdate, AfterLoad, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, AfterLoad, Column, Entity, PrimaryGeneratedColumn, Generated } from "typeorm";
 
 import { CryptService } from "../services/CryptService";
 import { randomUUID } from "crypto";
@@ -18,6 +18,7 @@ export class User
     public id?: number;
 
     @Column({unique: true, length: 36})
+    @Generated('uuid')
     public uuid!: string;
 
     @Column({ length: 127 })
@@ -42,11 +43,5 @@ export class User
     @BeforeInsert()
     private generateUUID() { if (!this.uuid) this.uuid = randomUUID(); }
 
-    public constructor(user?: Partial<User>)
-    {
-        this.uuid = randomUUID();
-
-        if (!user) return;
-        Object.assign(this, user);
-    }
-}
+    public constructor(partial?: Partial<User>) { Object.assign(this, partial) }
+};
