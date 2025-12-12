@@ -33,12 +33,7 @@ export class User
     @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
     public role!: UserRole;
 
-    @BeforeInsert()
-    @BeforeUpdate()
-    private async hashPassword(): Promise<void>
-    {
-        this.password = await CryptService.hash(this.password);
-    }
+    
 
     @BeforeInsert()
     private generateUUID() { if (!this.uuid) this.uuid = randomUUID(); }
