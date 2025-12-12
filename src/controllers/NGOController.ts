@@ -27,21 +27,21 @@ export class NGOController {
             if (exists) return res.status(409).json({ message: "Já existe uma ONG com esse nome fantasia!" });
 
             const manager_uuid = req.user!.uuid;
-            const ngo = new NGO(
+            const ngo = new NGO({
                 manager_uuid,
                 name,
                 trade_name,
                 area,
                 description,
                 cnpj,
-                0,
+                wallet: 0,
                 local,
                 phone_number,
                 contact_email
-            );
+            });
 
             const created = await NGOController.ngoRepository.createAndSave(ngo);
-            return res.status(201).location(`/ngo/${created.uuid}`).json({ uuid: created.uuid });
+            return res.status(201).location(`/ngo/${created.uuid}`).send();
         } catch (e) {
             console.error(`\n\n---> ERROR: ${e}`);
             return res.status(500).json({ message: "Erro interno do servidor." });
