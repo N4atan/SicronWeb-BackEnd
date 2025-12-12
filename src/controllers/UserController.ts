@@ -45,6 +45,16 @@ export class UserController {
             if (!email || !password)
                 return res.status(400).json({ message: "E-Mail ou senha não foram fornecidos!" });
 
+            // LOGS PARA DEBUG
+            console.log("Email recebido:", email);
+            console.log("Usuário encontrado:", user ? "SIM" : "NÃO");
+            if (user) {
+                console.log("Hash no banco:", user.password);
+                const senhaValida = await CryptService.compare(password, user.password);
+                console.log("Senha válida?", senhaValida);
+            }
+            // FIM LOGS
+
             const user = await UserController.userRepository.findByEmail(email);
             if (!user || !user.id || !(await CryptService.compare(password, user.password)))
                 return res.status(404).json({ message: "E-Mail e/ou senha estão incorretos." });
@@ -212,4 +222,5 @@ export class UserController {
             return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
         }
     }
+
 }
