@@ -212,7 +212,7 @@ export class UserController {
             if (newUsername) target.username = newUsername;
 
             if (newPassword) {
-                target.password = newPassword;
+                target.password = await CryptService.hash(newPassword); 
                 if (target.id) RefreshService.revoke(target.id);
             }
 
