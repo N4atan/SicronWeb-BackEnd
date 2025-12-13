@@ -11,13 +11,10 @@ export class NGORepository
     async createAndSave(data: Partial<NGO>): Promise<NGO>
     {
         const ngo = this.repository.create(data);
-        return this.repository.save(ngo);
+        return this.save(ngo);
     }
 
-    private async findAll(options?: FindManyOptions<NGO>): Promise<NGO[]> { return this.repository.find(options); }
-
-    private async findByID(id: number): Promise<NGO | null>     { return this.repository.findOneBy({ id });   }
-    
+    public async findAll(options?: FindManyOptions<NGO>): Promise<NGO[]> { return this.repository.find(options); }    
     public async findByUUID(uuid: string): Promise<NGO | null> { return this.repository.findOneBy({ uuid }); }
     public async findByName(name: string): Promise<NGO | null>
     {
@@ -29,12 +26,12 @@ export class NGORepository
         return this.repository.findOneBy({ trade_name });
     }
 
-    private async save(ngo: NGO): Promise<NGO>
+    public async save(ngo: NGO): Promise<NGO>
     {
         return this.repository.save(ngo);
     }
 
-    private async remove(ngo: NGO): Promise<NGO>
+    public async remove(ngo: NGO): Promise<NGO>
     {
         return this.repository.remove(ngo);
     }

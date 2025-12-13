@@ -5,10 +5,13 @@ import { randomUUID } from "crypto";
 
 export enum UserRole
 {
-    USER             = 'user',
-    ADMIN            = 'admin',
-    ONG_MANAGER      = 'ongManager',
-    PROVIDER_MANAGER = 'providerManager'
+    USER              = 'user',
+    ADMIN             = 'admin',
+    ONG_MANAGER       = 'ongManager',
+    ONG_EMPLOYER      = 'ongEmployer',
+    SUPPLIER_ADMIN    = 'supplierAdmin',
+    SUPPLIER_EMPLOYER = 'supplierEmployer',
+    PROVIDER_MANAGER  = 'providerManager'
 }
 
 @Entity('usertbl')

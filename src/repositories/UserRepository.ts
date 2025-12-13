@@ -6,12 +6,7 @@ import { User } from '../entities/User'
 
 export class UserRepository
 {
-    private repository: Repository<User>;
-
-    public constructor()
-    {
-        this.repository = AppDataSource.getRepository('usertbl');
-    }
+    private repository: Repository<User> = AppDataSource.getRepository(User);
 
     public async createAndSave( data: Partial<User> ): Promise<User>
     {

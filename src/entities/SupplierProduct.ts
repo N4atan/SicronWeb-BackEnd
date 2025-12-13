@@ -4,7 +4,7 @@ import { Supplier } from './Supplier';
 import { Product } from './Product';
 
 @Entity('supplier_products')
-@Unique(['supplier', 'product_id'])
+@Unique(['supplier', 'product'])
 export class SupplierProduct {
   @PrimaryGeneratedColumn()
   public id!: number;

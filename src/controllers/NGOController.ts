@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
 
-import { NGORepository } from "../repositories/NGORepository";
-
 import { NGO, NGOStatus } from "../entities/NGO";
+import { NGORepository  } from "../repositories/NGORepository";
+import { UserRole       } from "../entities/User";
 
 export class NGOController {
     private static ngoRepository = new NGORepository();
 
-    static async register(req: Request, res: Response): Promise<Response> {
-        try {
+    static async register(req: Request, res: Response): Promise<Response>
+    {
             const {
                 name,
                 trade_name,
@@ -42,14 +42,9 @@ export class NGOController {
 
             const created = await NGOController.ngoRepository.createAndSave(ngo);
             return res.status(201).location(`/ngo/${created.uuid}`).send();
-        } catch (e) {
-            console.error(`\n\n---> ERROR: ${e}`);
-            return res.status(500).json({ message: "Erro interno do servidor." });
-        }
     }
 
     static async query(req: Request, res: Response): Promise<Response> {
-        try {
             const filters: any = {};
             const { name, trade_name, area, status } = req.query;
 
@@ -58,18 +53,14 @@ export class NGOController {
             if (area)        filters.area        = String(area);
             if (status)      filters.status      = String(status).toUpperCase() as NGOStatus;
 
-            const list = await (await NGOController.ngoRepository['repository']).find({ where: filters });
+            const list = await this.ngoRepository.findAll({ where: filters });
             return res.status(200).json({ ngos: list });
-        } catch (e) {
-            console.error(`\n\n---> ERROR: ${e}`);
-            return res.status(500).json({ message: "Erro interno do servidor." });
-        }
     }
 
     static async update(req: Request, res: Response): Promise<Response> {
-        try {
-	        const ngo: NGO = req.ngo;
-            if (!ngo) return res.status(404).json({ message: "ONG não encontrada!" });
+	        const ngo = req.ngo!;
+            if (ngo.status !== NGOStatus.APPROVED && req.user!.role !== UserRole.ADMIN)
+                return res.status(403).json({message: "Permissão negada!"});
 
             const {
                 name,
@@ -89,30 +80,21 @@ export class NGOController {
             if (local)         ngo.local         = local;
             if (phone_number)  ngo.phone_number  = phone_number;
             if (contact_email) ngo.contact_email = contact_email;
-            if (status && req.user.role === "admin")
+            
+            if (status && req.user!.role === "admin")
                 ngo.status = status;
 
             await NGOController.ngoRepository['repository'].save(ngo);
             return res.status(204).send();
-        } catch (e) {
-            console.error(`\n\n---> ERROR: ${e}`);
-            return res.status(500).json({ message: "Erro interno do servidor." });
-        }
     }
 
     static async delete(req: Request, res: Response): Promise<Response> {
-        try {
-            const ngo: NGO = req.ngo; 
-            if (!ngo) return res.status(404).json({ message: "ONG não encontrada!" });
+            const ngo = req.ngo!; 
             
-	    if (ngo.manager_uuid !== req.user.uuid && req.user.role !== "admin")
+	        if (ngo.manager_uuid !== req.user!.uuid && req.user!.role !== "admin")
                 return res.status(403).json({ message: "Permissão negada!" });
 
             await NGOController.ngoRepository['repository'].remove(ngo);
             return res.status(204).send();
-        } catch (e) {
-            console.error(`\n\n---> ERROR: ${e}`);
-            return res.status(500).json({ message: "Erro interno do servidor." });
-        }
     }
 }

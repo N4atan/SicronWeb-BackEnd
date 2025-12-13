@@ -1,14 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, PrimaryColumn } from 'typeorm';
 
 import { SupplierProduct } from './SupplierProduct';
 import { NGOProduct      } from './NGOProduct';
 
 @Entity('products')
 export class Product {
-  @PrimaryGeneratedColumn()
-  public id!: number;
-
-  @Column({ unique: true })
+  @PrimaryColumn()
   public name!: string;
 
   @Column({ nullable: true })

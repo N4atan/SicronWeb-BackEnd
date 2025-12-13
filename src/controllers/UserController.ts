@@ -1,16 +1,18 @@
 import { Request, Response } from "express";
+
 import { User, UserRole } from "../entities/User";
+
 import { UserRepository } from "../repositories/UserRepository";
-import { TokenService } from "../services/TokenService";
+
+import { TokenService   } from "../services/TokenService";
 import { RefreshService } from "../services/RefreshService";
-import { CryptService } from "../services/CryptService";
+import { CryptService   } from "../services/CryptService";
 
 export class UserController {
-    private static userRepository = new UserRepository();
+    private static userRepo = new UserRepository();
 
     static async register(req: Request, res: Response): Promise<Response>
     {
-        try {
             const { username, email, password } = req.body;
         
             if (req.logged || req.user)
@@ -18,19 +20,15 @@ export class UserController {
             if (!username || !email || !password)
                 return res.status(400).json({ message: "Os campos necessários não foram fornecidos!" });
 
-            if (await UserController.userRepository.findByEmail(email))
+            if (await UserController.userRepo.findByEmail(email))
                 return res.status(409).json({ message: "O E-Mail fornecido já possui registro!" });
 
             const hashed = await CryptService.hash(password);
             const user = new User({ username, email, password: hashed });
 
-            await UserController.userRepository.createAndSave(user);
+            await UserController.userRepo.createAndSave(user);
 
             return res.status(201).location(`/users/${user.uuid}`).send();
-        } catch (e) {
-            console.error(`\n\n---> ERROR: ${e}`);
-            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
-        }
     }
 
     static async isLogged(req: Request, res: Response): Promise<Response>
@@ -40,12 +38,11 @@ export class UserController {
 
     static async login(req: Request, res: Response): Promise<Response>
     {
-        try {
             const { email, password } = req.body;
             if (!email || !password)
                 return res.status(400).json({ message: "E-Mail ou senha não foram fornecidos!" });
 
-            const user = await UserController.userRepository.findByEmail(email);
+            const user = await UserController.userRepo.findByEmail(email);
             if (!user || !user.id || !(await CryptService.compare(password, user.password)))
                 return res.status(404).json({ message: "E-Mail e/ou senha estão incorretos." });
 
@@ -71,17 +68,12 @@ export class UserController {
             });
 
             return res.status(204).send();
-        } catch (e) {
-            console.error(`\n\n---> ERROR: ${e}`);
-            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
-        }
     }
 
     static async refresh(req: Request, res: Response): Promise<Response>
     {
-        try {
-            const user: User    = req.user;
-            const token: string = req.cookies.refreshToken;
+            const user  = req.user!;
+            const token = req.cookies.refreshToken;
 
             const payload: any = TokenService.verifyRefresh(token);
             if (!RefreshService.isValid(payload.id, token, req.ip || "") || user.id !== payload.id || !user.id)
@@ -110,16 +102,13 @@ export class UserController {
             });
 
             return res.status(204).send();
-        } catch (e) {
-            console.error(`\n\n---> ERROR: ${e}`);
-            return res.status(403).json({ message: "Dados de autentificações inválidos ou expirados!" });
-        }
+
     }
 
     static async logout(req: Request, res: Response): Promise<Response>
     {
-        try {
             const token = req.cookies.refreshToken;
+
             if (token) {
                 try {
                     const payload: any = TokenService.verifyRefresh(token);
@@ -134,16 +123,11 @@ export class UserController {
             });
 
             return res.status(204).send();
-        } catch (e) {
-            console.error(`\n\n---> ERROR: ${e}`);
-            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
-        }
     }
 
     static async query(req: Request, res: Response): Promise<Response>
     {
-        try {
-            const user  = req.user;
+            const user = req.user!;
             const { uuid, email, name } = req.query;
             
             const filters: any = {};
@@ -152,7 +136,7 @@ export class UserController {
             if (email && user?.role !== UserRole.ADMIN) filters.email = String(email);
             if (name)                               filters.name  = String(name);
 
-            const users = await UserController.userRepository.findAll({ where: filters });
+            const users = await UserController.userRepo.findAll({ where: filters });
 
             users.forEach(u => {
                 if (user?.role !== UserRole.ADMIN && user?.id !== u.id) (u as any).email = undefined;
@@ -162,37 +146,27 @@ export class UserController {
             });
 
             return res.status(200).json({ users });
-        } catch (e) {
-            console.error(`\n\n---> ERROR: ${e}`);
-            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
-        }
     }
 
     static async delete(req: Request, res: Response): Promise<Response>
     {
-        try {
-            const user:   User = req.user;
-            const target: User = req.target;
+            const user   = req.user!;
+            const target = req.target!;
 
-            await UserController.userRepository.remove(target);
+            await UserController.userRepo.remove(target);
             if (target.id) RefreshService.revoke(target.id);
 
             return res.status(204).send();
-        } catch (e) {
-            console.error(`\n\n---> ERROR: ${e}`);
-            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
-        }
     }
 
     static async update(req: Request, res: Response): Promise<Response> 
     {
-        try {
-            const user:   User = req.user;
-            const target: User = req.target; 
+            const user   = req.user!;
+            const target = req.target!; 
             
             const { newUsername, newEmail, newPassword } = req.body;
         
-            if (newEmail && newEmail !== target.email && await UserController.userRepository.findByEmail(newEmail))
+            if (newEmail && newEmail !== target.email && await UserController.userRepo.findByEmail(newEmail))
                 return res.status(409).json({ message: "O E-mail fornecido já está em uso!" });
             
             if (newUsername) target.username = newUsername;
@@ -202,14 +176,10 @@ export class UserController {
                 if (target.id) RefreshService.revoke(target.id);
             }
 
-            if (newEmail)    target.email    = newEmail;
+            if (newEmail) target.email = newEmail;
 
-            const updated = await UserController.userRepository.save(target);
+            const updated = await UserController.userRepo.save(target);
             if (newPassword && updated) return UserController.refresh(req, res);
             return res.status(204).send();
-        } catch (e) {
-            console.error(`\n\n---> ERROR: ${e}`);
-            return res.status(500).json({ message: "Ocorreu um erro interno no servidor." });
-        }
     }
 }
