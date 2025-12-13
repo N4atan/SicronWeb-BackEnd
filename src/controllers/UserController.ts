@@ -23,8 +23,7 @@ export class UserController {
             if (await UserController.userRepo.findByEmail(email))
                 return res.status(409).json({ message: "O E-Mail fornecido já possui registro!" });
 
-            const hashed = await CryptService.hash(password);
-            const user = new User({ username, email, password: hashed });
+            const user = new User({ username, email, password });
 
             await UserController.userRepo.createAndSave(user);
 
@@ -42,7 +41,25 @@ export class UserController {
             if (!email || !password)
                 return res.status(400).json({ message: "E-Mail ou senha não foram fornecidos!" });
 
+<<<<<<< HEAD
             const user = await UserController.userRepo.findByEmail(email);
+=======
+            
+
+            const user = await UserController.userRepository.findByEmail(email);
+
+            // LOGS PARA DEBUG
+            console.log("Email recebido:", email);
+            console.log("Usuário encontrado:", user ? "SIM" : "NÃO");
+            if (user) {
+                console.log("Hash no banco:", user.password);
+                const senhaValida = await CryptService.compare(password, user.password);
+                console.log("Senha válida?", senhaValida);
+            }
+            // FIM LOGS
+
+            
+>>>>>>> 669a2dc8eb2ef63995b5ac6676c82a64617aa26e
             if (!user || !user.id || !(await CryptService.compare(password, user.password)))
                 return res.status(404).json({ message: "E-Mail e/ou senha estão incorretos." });
 
@@ -172,7 +189,7 @@ export class UserController {
             if (newUsername) target.username = newUsername;
 
             if (newPassword) {
-                target.password = newPassword;
+                target.password = await CryptService.hash(newPassword); 
                 if (target.id) RefreshService.revoke(target.id);
             }
 
@@ -182,4 +199,6 @@ export class UserController {
             if (newPassword && updated) return UserController.refresh(req, res);
             return res.status(204).send();
     }
+
 }
+
