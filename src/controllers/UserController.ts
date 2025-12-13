@@ -6,10 +6,10 @@ import { UserRepository } from "../repositories/UserRepository";
 
 import { TokenService   } from "../services/TokenService";
 import { RefreshService } from "../services/RefreshService";
-import { CryptService   } from "../services/CryptService";
+import { RefreshService } from "../services/CryptService";
 
 export class UserController {
-    private static userRepo = new UserRepository();
+    public static userRepo = new UserRepository();
 
     static async register(req: Request, res: Response): Promise<Response>
     {
@@ -41,25 +41,8 @@ export class UserController {
             if (!email || !password)
                 return res.status(400).json({ message: "E-Mail ou senha não foram fornecidos!" });
 
-<<<<<<< HEAD
-            const user = await UserController.userRepo.findByEmail(email);
-=======
-            
-
             const user = await UserController.userRepository.findByEmail(email);
 
-            // LOGS PARA DEBUG
-            console.log("Email recebido:", email);
-            console.log("Usuário encontrado:", user ? "SIM" : "NÃO");
-            if (user) {
-                console.log("Hash no banco:", user.password);
-                const senhaValida = await CryptService.compare(password, user.password);
-                console.log("Senha válida?", senhaValida);
-            }
-            // FIM LOGS
-
-            
->>>>>>> 669a2dc8eb2ef63995b5ac6676c82a64617aa26e
             if (!user || !user.id || !(await CryptService.compare(password, user.password)))
                 return res.status(404).json({ message: "E-Mail e/ou senha estão incorretos." });
 
@@ -189,7 +172,7 @@ export class UserController {
             if (newUsername) target.username = newUsername;
 
             if (newPassword) {
-                target.password = await CryptService.hash(newPassword); 
+                target.password = newPassword; 
                 if (target.id) RefreshService.revoke(target.id);
             }
 
