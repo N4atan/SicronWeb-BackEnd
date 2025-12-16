@@ -71,14 +71,9 @@ export class NGOController
 
   static async addEmployee(req: Request, res: Response): Promise<Response>
   {
-    const ngo = req.ngo
-    if (!ngo)
-      return res.status(404).json({ message: 'ONG não encontrada' })
-
-    if (req.user!.role !== UserRole.NGO_MANAGER || ngo.manager.uuid !== req.user!.uuid)
-      return res.status(403).json({ message: 'Permissão negada' })
-
+    const ngo = req.ngo!
     const { user_uuid } = req.body
+
     if (!user_uuid)
       return res.status(400).json({ message: 'user_uuid obrigatório' })
 
@@ -86,9 +81,67 @@ export class NGOController
     if (!user)
       return res.status(404).json({ message: 'Usuário não encontrado' })
 
-    user.role = UserRole.NGO_EMPLOYER
-    user.employedNGOs ? user.employedNGOs.push(ngo) : user.employedNGOs = new Array(ngo);
+    if (user.blockedNGOs?.includes(ngo.uuid))
+      return res.status(403).json({ message: 'Usuário bloqueado para esta ONG' })
 
+    if (!ngo.employees.find(u => u.uuid === user.uuid)) {
+      user.role = UserRole.NGO_EMPLOYER
+      user.employedNGOs = user.employedNGOs ? [...user.employedNGOs, ngo] : [ngo]
+      ngo.employees = ngo.employees ? [...ngo.employees, user] : [user]
+    }
+
+    await this.userRepository.save(user)
+    await this.ngoRepository.save(ngo)
+    return res.status(204).send()
+  }
+
+  static async removeEmployee(req: Request, res: Response): Promise<Response>
+  {
+    const ngo = req.ngo!
+    const { user_uuid } = req.body
+
+    if (!user_uuid)
+      return res.status(400).json({ message: 'user_uuid obrigatório' })
+
+    const user = await this.userRepository.findByUUID(user_uuid)
+    if (!user)
+      return res.status(404).json({ message: 'Usuário não encontrado' })
+
+    if (
+      user.uuid !== req.user!.uuid &&
+      req.user!.role !== UserRole.ADMIN &&
+      ngo.manager.uuid !== req.user!.uuid
+    )
+      return res.status(403).json({ message: 'Permissão negada' })
+
+    user.employedNGOs = user.employedNGOs?.filter(n => n.uuid !== ngo.uuid) || []
+    ngo.employees = ngo.employees?.filter(u => u.uuid !== user.uuid) || []
+
+    if (!user.employedNGOs.length)
+      user.role = UserRole.USER
+
+    await this.userRepository.save(user)
+    await this.ngoRepository.save(ngo)
+    return res.status(204).end()
+  }
+
+  static async blockEmployee(req: Request, res: Response): Promise<Response>
+  {
+    const ngo = req.ngo!
+    const user = req.user!
+
+    user.employedNGOs = user.employedNGOs?.filter(n => n.uuid !== ngo.uuid) || []
+    ngo.employees = ngo.employees?.filter(u => u.uuid !== user.uuid) || []
+
+    if (!user.employedNGOs.length)
+      user.role = UserRole.USER
+
+    const blocked = new Set(user.blockedNGOs || [])
+    blocked.has(ngo.uuid) ? blocked.delete(ngo.uuid) : blocked.add(ngo.uuid)
+
+    user.blockedNGOs = Array.from(blocked)
+
+    await this.ngoRepository.save(ngo)
     await this.userRepository.save(user)
     return res.status(204).send()
   }
@@ -133,12 +186,11 @@ export class NGOController
 
       newManager.role = UserRole.NGO_MANAGER
       await this.userRepository.save(newManager)
-
       ngo.manager = newManager
     }
 
     if (status && req.user!.role === UserRole.ADMIN)
-      ngo.status = status.toUpperCase() as ApprovalStatus;
+      ngo.status = status.toUpperCase() as ApprovalStatus
 
     await this.ngoRepository.save(ngo)
     return res.status(204).send()
@@ -160,3 +212,4 @@ export class NGOController
     return res.status(204).send()
   }
 }
+

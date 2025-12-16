@@ -15,6 +15,8 @@ router.patch('/:uuid', authenticateUser(true, [UserRole.ADMIN, UserRole.SUPPLIER
 
 router.delete('/:uuid', authenticateUser(true, [UserRole.ADMIN, UserRole.SUPPLIER_MANAGER]), resolveSupplierAccess, SupplierController.delete)
 
-router.post('/:uuid/employees', authenticateUser(true, [UserRole.SUPPLIER_MANAGER]), resolveSupplierAccess, SupplierController.addEmployee)
+router.post('/:uuid/employees', authenticateUser(true, [UserRole.SUPPLIER_MANAGER]), resolveSupplierAccess, SupplierController.addEmployee);
+router.delete('/:uuid/employees', authenticateUser(true, [UserRole.ADMIN, UserRole.SUPPLIER_MANAGER]), resolveSupplierAccess, SupplierController.removeEmployee);
+router.post('/:uuid/block', authenticateUser(true), resolveSupplierAccess, SupplierController.blockEmployment);
 
 export default router

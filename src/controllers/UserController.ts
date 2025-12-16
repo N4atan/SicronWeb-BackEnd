@@ -52,7 +52,7 @@ export class UserController {
             email: user.email
         });
 
-        RefreshService.save(user.uuid, tokens.refreshToken, req.ip || "");
+        await RefreshService.save(user.uuid, tokens.refreshToken, req.ip || "");
 
         res.cookie("refreshToken", tokens.refreshToken, {
             httpOnly: true,
@@ -76,7 +76,7 @@ export class UserController {
         const token = req.cookies.refreshToken;
 
         const payload: any = TokenService.verifyRefresh(token);
-        if (!RefreshService.isValid(payload.id, token, req.ip || "") || user.uuid !== payload.id || !user.uuid)
+        if (!(await RefreshService.isValid(payload.id, token, req.ip || "")) || user.uuid !== payload.id || !user.uuid)
             return res.status(403).json({ message: "Dados inválidos fornecidos ao serviço de autentificação!" });
 
         const newTokens = TokenService.generateTokenPair({
@@ -84,8 +84,8 @@ export class UserController {
             email: user.email
         });
 
-        RefreshService.revoke(user.uuid, req.ip || "");
-        RefreshService.save(user.uuid, newTokens.refreshToken, req.ip || "");
+        await RefreshService.revoke(user.uuid, req.ip || "");
+        await RefreshService.save(user.uuid, newTokens.refreshToken, req.ip || "");
 
         res.cookie("refreshToken", newTokens.refreshToken, {
             httpOnly: true,
@@ -111,7 +111,7 @@ export class UserController {
         if (token) {
             try {
                 const payload: any = TokenService.verifyRefresh(token);
-                RefreshService.revoke(payload.id, req.ip || "");
+                await RefreshService.revoke(payload.id, req.ip || "");
             } catch { }
         }
 
@@ -151,7 +151,7 @@ export class UserController {
         const target = req.target!;
 
         await UserController.userRepo.remove(target);
-        RefreshService.revoke(target.uuid);
+        await RefreshService.revoke(target.uuid);
 
         return res.status(204).send();
     }
@@ -176,7 +176,7 @@ export class UserController {
 
         if (updatedPassword) {
             target.password = updatedPassword;
-            RefreshService.revoke(target.uuid);
+            await RefreshService.revoke(target.uuid);
         }
 
         if (updatedEmail) target.email = updatedEmail;
