@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 
-import { NGO, NGOStatus } from '../entities/NGO'
+import { ApprovalStatus } from "../entities/ApprovalStatus";
+import { NGO } from '../entities/NGO'
 import { User, UserRole } from '../entities/User'
 
 import { NGORepository } from '../repositories/NGORepository'
@@ -62,7 +63,7 @@ export class NGOController
     if (name)       filters.name       = String(name)
     if (trade_name) filters.trade_name = String(trade_name)
     if (area)       filters.area       = String(area)
-    if (status)     filters.status     = String(status).toUpperCase() as NGOStatus
+    if (status)     filters.status     = String(status).toUpperCase() as ApprovalStatus
 
     const list = await this.ngoRepository.findAll({ where: filters })
     return res.status(200).json({ ngos: list })
@@ -99,7 +100,7 @@ export class NGOController
       return res.status(404).json({ message: 'ONG não encontrada' })
 
     if (
-      ngo.status !== NGOStatus.APPROVED &&
+      ngo.status !== ApprovalStatus.APPROVED &&
       req.user!.role !== UserRole.ADMIN &&
       ngo.manager.uuid !== req.user!.uuid
     )
@@ -125,8 +126,7 @@ export class NGOController
     if (phone_number)  ngo.phone_number  = phone_number
     if (contact_email) ngo.contact_email = contact_email
 
-    if (manager_uuid && req.user!.role === UserRole.ADMIN)
-    {
+    if (manager_uuid && req.user!.role === UserRole.ADMIN) {
       const newManager = await this.userRepository.findByUUID(manager_uuid)
       if (!newManager)
         return res.status(404).json({ message: 'Novo manager não encontrado' })
@@ -138,7 +138,7 @@ export class NGOController
     }
 
     if (status && req.user!.role === UserRole.ADMIN)
-      ngo.status = status
+      ngo.status = status.toUpperCase() as ApprovalStatus;
 
     await this.ngoRepository.save(ngo)
     return res.status(204).send()

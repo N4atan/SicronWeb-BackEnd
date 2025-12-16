@@ -1,10 +1,9 @@
 import { Entity, Generated, PrimaryGeneratedColumn, Column, ManyToMany, OneToMany, OneToOne, JoinColumn } from 'typeorm';
 
 import { User } from './User';
-
+import { ApprovalStatus } from './ApprovalStatus'; 
 import { SupplierProduct } from './SupplierProduct';
 import { SupplierPaymentReceipt } from './SupplierPaymentReceipt';
-
 
 @Entity('suppliers')
 export class Supplier {
@@ -40,6 +39,9 @@ export class Supplier {
 
   @Column({ nullable: true })
   public municipalRegistration!: string;
+    
+  @Column({ type: 'enum', enum: ApprovalStatus, default: ApprovalStatus.PENDING})
+  public status!: ApprovalStatus;
 
   @Column()
   public contactEmail!: string;
