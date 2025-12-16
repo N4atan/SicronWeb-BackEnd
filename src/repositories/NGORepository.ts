@@ -5,7 +5,7 @@ import { AppDataSource } from "../config/data-source";
 import { NGO } from '../entities/NGO';
 
 export class NGORepository {
-    private repository: Repository<NGO> = AppDataSource.getRepository('ngotbl');
+    private repository: Repository<NGO> = AppDataSource.getRepository(NGO);
 
     async createAndSave(data: Partial<NGO>): Promise<NGO> {
         const ngo = this.repository.create(data);
