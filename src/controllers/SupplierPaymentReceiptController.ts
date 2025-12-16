@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 
 import { UserRole } from '../entities/User'
+import { Supplier } from '../entities/Supplier'
 import { SupplierPaymentReceipt } from '../entities/SupplierPaymentReceipt'
 
 import { SupplierPaymentReceiptRepository } from '../repositories/SupplierPaymentReceiptRepository'
@@ -54,18 +55,24 @@ export class SupplierPaymentReceiptController {
 
     if (req.user!.role === UserRole.NGO_MANAGER || req.user!.role === UserRole.NGO_EMPLOYER) {
       if (!req.ngo)
-        return res.status(400).json({ message: 'Nenhuma ONG associada à sessão' })
+        return res.status(400).json({ message: 'Nenhuma ONG associada à sessão' });
       filters.ngo = { uuid: req.ngo.uuid };
       const payments = await this.receiptRepository.findAll({ where: filters });
       return res.status(200).json({ payments });
     }
 
-    if (req.user!.role === UserRole.SUPPLIER_ADMIN || req.user!.role === UserRole.SUPPLIER_EMPLOYER) {
-      const supplier = await this.supplierRepository.findByUserUUID(req.user!.uuid);
-      if (!supplier)
+    if (req.user!.role === UserRole.SUPPLIER_MANAGER || req.user!.role === UserRole.SUPPLIER_EMPLOYER) {
+      const payments: SupplierPaymentReceipt[] = [];
+      const suppliers = req.supplier ? [req.supplier] : await this.supplierRepository.findByUserUUID(req.user!.uuid);
+      if (!suppliers)
         return res.status(404).json({ message: 'Fornecedor não encontrado' });
-      filters.supplier = { uuid: supplier.uuid };
-      const payments = await this.receiptRepository.findAll({ where: filters });
+      
+      for (let i = 0; i < suppliers.length; ++i) {
+	      filters.supplier = { uuid: suppliers[i].uuid };
+	      const result = await this.receiptRepository.findAll({ where: filters });
+	      if (result) payments.push(...result);
+      }
+
       return res.status(200).json({ payments });
     }
 

@@ -12,12 +12,8 @@ export class UserController {
     public static userRepo = new UserRepository();
 
     static async register(req: Request, res: Response): Promise<Response> {
-        console.log(`[DEBUG] UserController.register called. Body:`, req.body);
         const { username, email, password, role } = req.body;
 
-        // Regra: Apenas ADMIN pode criar usuários logado.
-        // Se um usuário COMUM logado tentar criar conta, bloqueia (regra original).
-        // Se um ADMIN tentar criar, deixa passar.
         if ((req.logged || req.user) && req.user?.role !== UserRole.ADMIN)
             return res.status(403).json({ message: "Permissão negada!" });
 
@@ -27,24 +23,19 @@ export class UserController {
         if (await UserController.userRepo.findByEmail(email))
             return res.status(409).json({ message: "O E-Mail fornecido já possui registro!" });
 
-        // Se quem está criando é Admin, aceita a role enviada. Senão, usa default.
         const userRole = (req.user?.role === UserRole.ADMIN && role) ? role : undefined;
 
         const user = new User({ username, email, password, role: userRole });
 
         await UserController.userRepo.createAndSave(user);
-        console.log(`[DEBUG] User registered successfully: ${user.uuid}`);
-
         return res.status(201).location(`/users/${user.uuid}`).send();
     }
 
     static async isLogged(req: Request, res: Response): Promise<Response> {
-        // console.log(`[DEBUG] UserController.isLogged called.`); // Commented out to reduce noise
         return (req.logged || req.user) ? res.status(200).send() : res.status(401).send();
     }
 
     static async login(req: Request, res: Response): Promise<Response> {
-        console.log(`[DEBUG] UserController.login called. Body:`, req.body);
         const { email, password } = req.body;
         if (!email || !password)
             return res.status(400).json({ message: "E-Mail ou senha não foram fornecidos!" });
@@ -57,11 +48,11 @@ export class UserController {
         }
 
         const tokens = TokenService.generateTokenPair({
-            id: user.id,
+            id: user.uuid,
             email: user.email
         });
 
-        RefreshService.save(user.id, tokens.refreshToken, req.ip || "");
+        RefreshService.save(user.uuid, tokens.refreshToken, req.ip || "");
 
         res.cookie("refreshToken", tokens.refreshToken, {
             httpOnly: true,
@@ -77,7 +68,6 @@ export class UserController {
             maxAge: 60 * 15 * 1000
         });
 
-        console.log(`[DEBUG] Login successful for user: ${user.id} (${user.email})`);
         return res.status(204).send();
     }
 
@@ -86,16 +76,16 @@ export class UserController {
         const token = req.cookies.refreshToken;
 
         const payload: any = TokenService.verifyRefresh(token);
-        if (!RefreshService.isValid(payload.id, token, req.ip || "") || user.id !== payload.id || !user.id)
+        if (!RefreshService.isValid(payload.id, token, req.ip || "") || user.uuid !== payload.id || !user.uuid)
             return res.status(403).json({ message: "Dados inválidos fornecidos ao serviço de autentificação!" });
 
         const newTokens = TokenService.generateTokenPair({
-            id: user.id,
+            id: user.uuid,
             email: user.email
         });
 
-        RefreshService.revoke(user.id, req.ip || "");
-        RefreshService.save(user.id, newTokens.refreshToken, req.ip || "");
+        RefreshService.revoke(user.uuid, req.ip || "");
+        RefreshService.save(user.uuid, newTokens.refreshToken, req.ip || "");
 
         res.cookie("refreshToken", newTokens.refreshToken, {
             httpOnly: true,
@@ -135,7 +125,6 @@ export class UserController {
     }
 
     static async query(req: Request, res: Response): Promise<Response> {
-        console.log(`[DEBUG] UserController.query called. Query:`, req.query);
         const user = req.user!;
         const { uuid, email, name } = req.query;
 
@@ -159,27 +148,21 @@ export class UserController {
     }
 
     static async delete(req: Request, res: Response): Promise<Response> {
-        // const user   = req.user!; // Not strictly needed for logic if middleware handled permission
         const target = req.target!;
 
-        console.log(`[DEBUG] UserController.delete called. Target ID: ${target.id}, Target UUID: ${target.uuid}`);
-
         await UserController.userRepo.remove(target);
-        if (target.id) RefreshService.revoke(target.id);
+        RefreshService.revoke(target.uuid);
 
-        console.log(`[DEBUG] User deleted successfully.`);
         return res.status(204).send();
     }
 
     static async update(req: Request, res: Response): Promise<Response> {
         const target = req.target!;
-        console.log(`[DEBUG] UserController.update called. Target ID: ${target.id}, Body:`, req.body);
 
         const { newUsername, newEmail, newPassword, username, email, password, role } = req.body;
 
-        // Support both old and new payload keys
         const updatedUsername = newUsername || username;
-        const updatedEmail = newEmail || email;
+        const updatedEmail    = newEmail    || email;
         const updatedPassword = newPassword || password;
 
         if (updatedEmail && updatedEmail !== target.email && await UserController.userRepo.findByEmail(updatedEmail))
@@ -187,26 +170,19 @@ export class UserController {
 
         if (updatedUsername) target.username = updatedUsername;
 
-        // Role update logic: Only admins can change roles
         if (role && req.user!.role === UserRole.ADMIN) {
             target.role = role;
         }
 
         if (updatedPassword) {
             target.password = updatedPassword;
-            if (target.id) RefreshService.revoke(target.id);
+            RefreshService.revoke(target.uuid);
         }
 
         if (updatedEmail) target.email = updatedEmail;
 
         const updated = await UserController.userRepo.save(target);
-        console.log(`[DEBUG] User updated successfully.`);
-
-        // Note: calling refresh here might be tricky if req/res semantics change, but leaving as is.
-        // Assuming refresh logic is self-contained.
-        // if (newPassword && updated) return UserController.refresh(req, res); // Careful with recursion/context
 
         return res.status(204).send();
     }
-
 }

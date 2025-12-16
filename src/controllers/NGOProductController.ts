@@ -24,13 +24,13 @@ export class NGOProductController {
         if (!product)
             return res.status(404).json({ message: 'Produto não encontrado' })
 
-        const exists = await this.ngoProductRepository.find(req.ngo, product);
+        const exists = await this.ngoProductRepository.find(req.ngo!, product);
 
         if (exists)
             return res.status(409).json({ message: 'Produto já registrado nesta ONG' })
 
         const ngoProduct = new NGOProduct({
-            ngo: req.ngo,
+            ngo: req.ngo!,
             product,
             quantity,
             notes
@@ -41,7 +41,7 @@ export class NGOProductController {
     }
 
     static async update(req: Request, res: Response): Promise<Response> {
-        const ngoProduct = req.ngoProduct
+        const ngoProduct = req.ngoProduct!
 
         const { quantity, notes } = req.body
 
@@ -56,7 +56,7 @@ export class NGOProductController {
     }
 
     static async delete(req: Request, res: Response): Promise<Response> {
-        await this.ngoProductRepository.remove(req.ngoProduct!)
+        await this.ngoProductRepository.remove(req.ngo!, req.ngoProduct!.product)
         return res.status(204).end()
     }
 }

@@ -33,7 +33,7 @@ export function authenticateUser(
             if (payload.email !== user.email)
                 return required ? res.status(401).end() : next()
 
-            if (!RefreshService.isValid(user.id, refreshToken, req.ip))
+            if (!RefreshService.isValid(user.uuid, refreshToken, req.ip))
                 return required ? res.status(401).end() : next()
 
             if (roles && !roles.includes(user.role))

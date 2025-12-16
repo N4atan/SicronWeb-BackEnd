@@ -1,5 +1,5 @@
 interface RefreshRecord {
-    userId: number;
+    uuid:   string;
     token:  string;
     ip:     string;
 }
@@ -7,28 +7,28 @@ interface RefreshRecord {
 export const RefreshStore: RefreshRecord[] = [];
 
 export class RefreshService {
-    static save(userId: number, token: string, ip: string): void
+    static save(uuid: string, token: string, ip: string): void
     {
-        const idx = RefreshStore.findIndex(r => r.userId === userId && r.ip == ip);
+        const idx = RefreshStore.findIndex(r => r.uuid === uuid && r.ip == ip);
         if (idx !== -1) RefreshStore.splice(idx, 1);
-        RefreshStore.push({ userId, token, ip });
+        RefreshStore.push({ uuid, token, ip });
     }
 
-    static isValid(userId: number, token: string, ip: string | undefined): boolean
+    static isValid(uuid: string, token: string, ip: string | undefined): boolean
     {
         if (!ip) return false;
-        return RefreshStore.some(r => r.userId === userId && r.token === token && r.ip === ip);
+        return RefreshStore.some(r => r.uuid === uuid && r.token === token && r.ip === ip);
     }
 
-    static revoke(userId: number, ip?: string): void
+    static revoke(uuid: string, ip?: string): void
     {
         let idx: number;
 
 	
 	while (
 		(idx = ip ?
-			RefreshStore.findIndex(r => r.userId === userId && r.ip === ip) :
-			RefreshStore.findIndex(r => r.userId === userId)
+			RefreshStore.findIndex(r => r.uuid === uuid && r.ip === ip) :
+			RefreshStore.findIndex(r => r.uuid === uuid)
 		) != -1
 	) RefreshStore.splice(idx, 1);
     }

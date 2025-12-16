@@ -25,5 +25,5 @@ export class NGOProduct {
     @Column({ nullable: true })
     notes?: string;
 
-    public constructor(partial: Partial<NGO>) { Object.assign(this, partial); }
+    public constructor(partial: Partial<NGOProduct>) { Object.assign(this, partial); }
 }
