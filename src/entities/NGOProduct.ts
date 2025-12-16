@@ -6,19 +6,24 @@ import { Product } from './Product';
 @Entity('ngo_products')
 @Unique(['ngo', 'product'])
 export class NGOProduct {
-  @PrimaryGeneratedColumn()
-  public id!: number;
+    @PrimaryGeneratedColumn()
+    id!: number;
 
-  @ManyToOne(() => NGO, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'ngo_id' })
-  public ngo!: NGO;
+    @ManyToOne(() => NGO, ngo => ngo.products, { onDelete: 'CASCADE' })
+    ngo!: NGO;
 
-  @ManyToOne(() => Product, product => product.ngoProducts, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'product_id' })
-  public product!: Product;
+    @ManyToOne(() => Product)
+    @JoinColumn({
+      name: 'ngo_needed_products_uuid',
+      referencedColumnName: 'uuid'
+    })
+    product!: Product;
 
-  @Column('int')
-  public requiredQuantity!: number;
+    @Column('int')
+    quantity!: number;
 
-  public constructor(partial?: Partial<NGOProduct>) { Object.assign(this, partial) }
-};
+    @Column({ nullable: true })
+    notes?: string;
+
+    public constructor(partial: Partial<NGO>) { Object.assign(this, partial); }
+}

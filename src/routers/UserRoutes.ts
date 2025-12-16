@@ -2,25 +2,20 @@ import { Router } from "express";
 
 import { UserController } from "../controllers/UserController";
 
-import { loginChecker } from "../middlewares/loginChecker";
-import { loginRequire } from "../middlewares/loginRequire";
-import { loginPrivillege } from "../middlewares/loginPrivillege";
+import { authenticateUser     } from "../middlewares/authenticateUser";
+import { authorizeSelfOrAdmin } from "../middlewares/authorizeSelfOrAdmin";
 
 let router: Router = Router();
 
-router.use(loginChecker);
+router.get("/", authenticateUser(false), UserController.query);
+router.post("/", authenticateUser(false), UserController.register);
+router.post("/auth/login", authenticateUser(false), UserController.login);
 
-router.get("/", UserController.query);
-router.post("/", UserController.register);
-router.post("/auth/login", UserController.login);
+router.post("/auth/refresh", authenticateUser(true), UserController.refresh);
+router.post("/auth/check", authenticateUser(true), UserController.isLogged);
+router.post("/auth/logout", authenticateUser(true), UserController.logout);
 
-router.use(loginRequire);
-
-router.post("/auth/refresh", UserController.refresh);
-router.post("/auth/check", UserController.isLogged);
-router.post("/auth/logout", UserController.logout);
-
-router.delete("/:uuid", loginPrivillege, UserController.delete);
-router.patch("/:uuid", loginPrivillege, UserController.update);
+router.delete("/:uuid", authenticateUser(true), authorizeSelfOrAdmin, UserController.delete);
+router.patch("/:uuid", authenticateUser(true), authorizeSelfOrAdmin, UserController.update);
 
 export default router;
