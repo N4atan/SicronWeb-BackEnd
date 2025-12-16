@@ -73,6 +73,12 @@ export class User {
   })
   public employedSuppliers?: Supplier[]
 
+  @Column('simple-array', { nullable: true })
+  public blockedSuppliers?: string[];
+
+  @Column('simple-array', { nullable: true })
+  public blockedNGOs?: string[];
+
   private previous_password!: string
 
   @AfterLoad()
