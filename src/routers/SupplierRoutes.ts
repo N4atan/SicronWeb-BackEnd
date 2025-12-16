@@ -9,6 +9,8 @@ const router: Router = Router()
 
 router.get('/', authenticateUser(false), SupplierController.query)
 
+router.get('/:uuid', authenticateUser(false), SupplierController.getOne)
+
 router.post('/', authenticateUser(true), SupplierController.register)
 
 router.patch('/:uuid', authenticateUser(true, [UserRole.ADMIN, UserRole.SUPPLIER_MANAGER]), resolveSupplierAccess, SupplierController.update)

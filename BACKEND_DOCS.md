@@ -145,3 +145,54 @@ Este middleware decide **quem** será alterado ou deletado. Ele resolve a ambigu
 
 *   **Logs Detalhados:** O sistema possui logs (`console.log` com prefixo `[DEBUG]`) em todos os controllers e middlewares críticos auth para rastrear o fluxo exato de cada requisição.
 *   **Rodar Local:** `npm run dev` (porta 3000).
+
+---
+
+## 🚀 6. Deploy
+
+### Hospedagem Recomendada: Render (Web Service)
+
+1.  **Crie um novo Web Service** no Dashboard do Render.
+2.  **Conecte seu repositório GitHub**.
+3.  **Configurações de Build:**
+    *   **Runtime:** Node
+    *   **Build Command:** `npm run build`
+    *   **Start Command:** `npm start`
+4.  **Variáveis de Ambiente (Environment Variables):**
+    Adicione as seguintes chaves (copie do seu `.env` local ou produção):
+    *   `PORT` (O Render define automaticamente, mas bom ter 3000 como fallback)
+    *   `DB_HOST`
+    *   `DB_PORT`
+    *   `DB_USERNAME`
+    *   `DB_PASSWORD`
+    *   `DB_NAME`
+    *   `JWT_ACCESS_SECRET`
+    *   `JWT_REFRESH_SECRET`
+    *   `JWT_ACCESS_EXPIRES`
+    *   `JWT_REFRESH_EXPIRES`
+
+### Hospedagem: Vercel
+
+Para deploy na Vercel, o projeto precisa de um arquivo `vercel.json`.
+
+1.  Crie um arquivo `vercel.json` na raiz:
+    ```json
+    {
+      "version": 2,
+      "builds": [
+        {
+          "src": "dist/server.js",
+          "use": "@vercel/node"
+        }
+      ],
+      "routes": [
+        {
+          "src": "/(.*)",
+          "dest": "dist/server.js"
+        }
+      ]
+    }
+    ```
+    *(Nota: Vercel é otimizada para Serverless Functions. APIs Express monolíticas podem enfrentar problemas de "cold start" ou timeouts. Render é mais recomendado para APIs persistentes de longo prazo).*
+
+2.  Adicione as mesmas Variáveis de Ambiente no painel da Vercel.

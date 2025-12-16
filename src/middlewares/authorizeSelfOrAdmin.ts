@@ -28,7 +28,7 @@ export async function authorizeSelfOrAdmin(req: Request, res: Response, next: Ne
         }
 
 
-        if (!req.logged || ((user.role !== UserRole.ADMIN && user.id !== target.id))) {
+        if (!req.logged || ((user.role !== UserRole.ADMIN && user.uuid !== target.uuid))) {
             return res.status(403).json({ message: "Permissão negada!" });
         }
 

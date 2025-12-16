@@ -26,42 +26,42 @@ export class ProductController {
             category
         })
 
-        const created = await this.productRepository.createAndSave(product)
-        return res.status(201).location(`/products/${created.name}`).send()
+        const created = await ProductController.productRepository.createAndSave(product)
+        return res.status(201).location(`/products/${created.name}`).json(created)
     }
 
     static async query(req: Request, res: Response): Promise<Response> {
         const filters: any = {}
         const { name, category, description } = req.query
 
-        if (name)     filters.name = String(name)
+        if (name) filters.name = String(name)
         if (category) filters.category = String(category)
-	if (description) filters.description = String(description);
+        if (description) filters.description = String(description);
 
-        const list = await this.productRepository.findAll({ where: filters })
+        const list = await ProductController.productRepository.findAll({ where: filters })
         return res.status(200).json({ products: list })
     }
 
     static async update(req: Request, res: Response): Promise<Response> {
         const product = req.product!
-        
-	const {
+
+        const {
             name,
             description,
             category,
             active
         } = req.body
 
-        if (name)        product.name = name
+        if (name) product.name = name
         if (description) product.description = description
-        if (category)    product.category = category
+        if (category) product.category = category
 
-        await this.productRepository.save(product)
+        await ProductController.productRepository.save(product)
         return res.status(204).end()
     }
 
     static async delete(req: Request, res: Response): Promise<Response> {
-        await this.productRepository.remove(req.product!.name)
+        await ProductController.productRepository.remove(req.product!.uuid)
         return res.status(204).end()
     }
 }
