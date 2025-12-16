@@ -1,7 +1,7 @@
 import { Entity, Generated, PrimaryGeneratedColumn, Column, ManyToMany, OneToMany, OneToOne, JoinColumn } from 'typeorm';
 
 import { User } from './User';
-import { ApprovalStatus } from './ApprovalStatus'; 
+import { ApprovalStatus } from './ApprovalStatus';
 import { SupplierProduct } from './SupplierProduct';
 import { SupplierPaymentReceipt } from './SupplierPaymentReceipt';
 
@@ -19,12 +19,11 @@ export class Supplier {
 
   @OneToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
   @JoinColumn({
-     name: 'manager_uuid',
-     referencedColumnName: 'uuid'
+    name: 'manager_uuid',
+    referencedColumnName: 'uuid'
   })
   public manager!: User;
 
-  @Column()
   @ManyToMany(() => User, user => user.employedSuppliers)
   public employees!: User[];
 
@@ -39,8 +38,8 @@ export class Supplier {
 
   @Column({ nullable: true })
   public municipalRegistration!: string;
-    
-  @Column({ type: 'enum', enum: ApprovalStatus, default: ApprovalStatus.PENDING})
+
+  @Column({ type: 'enum', enum: ApprovalStatus, default: ApprovalStatus.PENDING })
   public status!: ApprovalStatus;
 
   @Column()

@@ -21,11 +21,11 @@ export class SupplierProductController {
         if (!name || price === undefined || availableQuantity === undefined || !avgDeliveryTimeDays)
             return res.status(400).json({ message: 'Campos obrigatórios' })
 
-        const product = await this.productRepository.findByName(name)
+        const product = await SupplierProductController.productRepository.findByName(name)
         if (!product)
             return res.status(404).json({ message: 'Produto não encontrado' })
 
-        const exists = await this.supplierProductRepository.find(req.supplier!, product);
+        const exists = await SupplierProductController.supplierProductRepository.find(req.supplier!, product);
         if (exists)
             return res.status(409).json({ message: 'Produto já ofertado por este fornecedor' })
 
@@ -37,8 +37,8 @@ export class SupplierProductController {
             avgDeliveryTimeDays
         })
 
-        await this.supplierProductRepository.createAndSave(supplierProduct)
-        return res.status(201).end()
+        const created = await SupplierProductController.supplierProductRepository.createAndSave(supplierProduct)
+        return res.status(201).json(created)
     }
 
     static async update(req: Request, res: Response): Promise<Response> {
@@ -59,13 +59,12 @@ export class SupplierProductController {
         if (avgDeliveryTimeDays)
             supplierProduct.avgDeliveryTimeDays = avgDeliveryTimeDays
 
-        await this.supplierProductRepository.save(supplierProduct)
+        await SupplierProductController.supplierProductRepository.save(supplierProduct)
         return res.status(204).end()
     }
 
     static async delete(req: Request, res: Response): Promise<Response> {
-        const supplierProduct = req.supplierProduct!;
-        await this.supplierProductRepository.remove(req.supplier!, supplierProduct.product)
+        await SupplierProductController.supplierProductRepository.removeById(req.supplierProduct!.id)
         return res.status(204).end()
     }
 }

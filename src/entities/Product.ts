@@ -1,17 +1,24 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, PrimaryColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Generated } from 'typeorm';
 
 import { SupplierProduct } from './SupplierProduct';
-import { NGOProduct      } from './NGOProduct';
+import { NGOProduct } from './NGOProduct';
 
 @Entity('products')
 export class Product {
-  @PrimaryColumn()
+  @PrimaryGeneratedColumn()
+  public id?: number;
+
+  @Column({ unique: true, length: 36 })
+  @Generated('uuid')
+  public uuid!: string;
+
+  @Column({ unique: true })
   public name!: string;
 
   @Column({ nullable: true })
   public description!: string;
 
-  @Column({ nullable: true})
+  @Column({ nullable: true })
   public category!: string;
 
   @OneToMany(() => SupplierProduct, sp => sp.product)

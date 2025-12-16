@@ -12,6 +12,8 @@ router.get("/", authenticateUser(false), NGOController.query);
 
 router.post("/", authenticateUser(true), NGOController.register);
 
+router.get("/:uuid", authenticateUser(false), NGOController.getOne);
+
 router.patch("/:uuid", authenticateUser(true, [UserRole.NGO_MANAGER, UserRole.ADMIN, UserRole.NGO_EMPLOYER]), resolveNGOAccess, NGOController.update);
 router.delete("/:uuid", authenticateUser(true, [UserRole.NGO_MANAGER, UserRole.ADMIN]), resolveNGOAccess, NGOController.delete);
 

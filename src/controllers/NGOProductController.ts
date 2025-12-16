@@ -20,11 +20,11 @@ export class NGOProductController {
         if (!name || quantity === undefined)
             return res.status(400).json({ message: 'Campos obrigatórios' })
 
-        const product = await this.productRepository.findByName(name)
+        const product = await NGOProductController.productRepository.findByName(name)
         if (!product)
             return res.status(404).json({ message: 'Produto não encontrado' })
 
-        const exists = await this.ngoProductRepository.find(req.ngo!, product);
+        const exists = await NGOProductController.ngoProductRepository.find(req.ngo!, product);
 
         if (exists)
             return res.status(409).json({ message: 'Produto já registrado nesta ONG' })
@@ -36,8 +36,8 @@ export class NGOProductController {
             notes
         })
 
-        await this.ngoProductRepository.createAndSave(ngoProduct)
-        return res.status(201).end()
+        const created = await NGOProductController.ngoProductRepository.createAndSave(ngoProduct)
+        return res.status(201).json(created)
     }
 
     static async update(req: Request, res: Response): Promise<Response> {
@@ -51,12 +51,13 @@ export class NGOProductController {
         if (notes !== undefined)
             ngoProduct.notes = notes
 
-        await this.ngoProductRepository.save(ngoProduct)
+        await NGOProductController.ngoProductRepository.save(ngoProduct)
         return res.status(204).end()
     }
 
     static async delete(req: Request, res: Response): Promise<Response> {
-        await this.ngoProductRepository.remove(req.ngo!, req.ngoProduct!.product)
+        // req.ngoProduct is populated by middleware
+        await NGOProductController.ngoProductRepository.removeById(req.ngoProduct!.id)
         return res.status(204).end()
     }
 }
