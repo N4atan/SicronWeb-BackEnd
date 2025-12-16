@@ -49,9 +49,4 @@ export class UserDonationReceiptController {
     const donations = await this.receiptRepository.findAll({ where: filters })
     return res.status(200).json({ donations })
   }
-
-  static async delete(req: Request, res: Response): Promise<Response> {
-    await this.receiptRepository.remove(req.donationReceipt!);
-    return res.status(204).end();
-  }
 }

@@ -37,11 +37,11 @@ export class SupplierController
     if (exists)
       return res.status(409).json({ message: 'Fornecedor já cadastrado' })
 
-    req.user.role = UserRole.SUPPLIER_MANAGER;_
+    req.user.role = UserRole.SUPPLIER_MANAGER;
     await this.userRepository.save(req.user)
 
     const supplier = new Supplier({
-      owner: req.user,
+      manager: req.user,
       companyName,
       tradeName,
       cnpj,
@@ -99,12 +99,10 @@ export class SupplierController
 
   static async update(req: Request, res: Response): Promise<Response>
   {
-    const supplier = req.supplier
-    if (!supplier)
-      return res.status(404).json({ message: 'Fornecedor não encontrado' })
+    const supplier = req.supplier!
 
     if (
-      supplier.owner.uuid !== req.user!.uuid &&
+      supplier.manager.uuid !== req.user!.uuid &&
       req.user!.role !== UserRole.ADMIN
     )
       return res.status(403).json({ message: 'Permissão negada' })
@@ -118,7 +116,7 @@ export class SupplierController
       city,
       state,
       postalCode,
-      owner_uuid
+      manager_uuid
     } = req.body
 
     if (companyName)  supplier.companyName  = companyName
@@ -130,16 +128,16 @@ export class SupplierController
     if (state)        supplier.state        = state
     if (postalCode)   supplier.postalCode   = postalCode
 
-    if (owner_uuid && req.user!.role === UserRole.ADMIN)
+    if (manager_uuid && req.user!.role === UserRole.ADMIN)
     {
-      const newOwner = await this.userRepository.findByUUID(owner_uuid)
-      if (!newOwner)
-        return res.status(404).json({ message: 'Novo owner não encontrado' })
+      const newManager = await this.userRepository.findByUUID(manager_uuid)
+      if (!newManager)
+        return res.status(404).json({ message: 'Novo gerenciador não encontrado' })
 
-      newOwner.role = UserRole.SUPPLIER_ADMIN
-      await this.userRepository.save(newOwner)
+      newManager.role = UserRole.SUPPLIER_MANAGER
+      await this.userRepository.save(newManager)
 
-      supplier.owner = newOwner
+      supplier.manager = newManager
     }
 
     await this.supplierRepository.save(supplier)
@@ -148,17 +146,7 @@ export class SupplierController
 
   static async delete(req: Request, res: Response): Promise<Response>
   {
-    const supplier = req.supplier
-    if (!supplier)
-      return res.status(404).json({ message: 'Fornecedor não encontrado' })
-
-    if (
-      supplier.owner.uuid !== req.user!.uuid &&
-      req.user!.role !== UserRole.ADMIN
-    )
-      return res.status(403).json({ message: 'Forbidden' })
-
-    await this.supplierRepository.remove(supplier)
+    await this.supplierRepository.remove(req.supplier!.uuid)
     return res.status(204).send()
   }
 }

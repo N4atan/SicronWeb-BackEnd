@@ -23,5 +23,8 @@ export class SupplierProduct {
   @Column('int')
   public availableQuantity!: number;
 
+  @Column('int')
+  public avgDeliveryTimeDays!: number;
+
   public constructor(partial?: Partial<SupplierProduct>) { Object.assign(this, partial) }
 };

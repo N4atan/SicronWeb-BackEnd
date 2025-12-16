@@ -15,26 +15,26 @@ export class SupplierProductController {
             name,
             price,
             availableQuantity,
-            avgDeliveryTime
+            avgDeliveryTimeDays
         } = req.body
 
-        if (!name || price === undefined || availableQuantity === undefined || !avgDeliveryTime)
+        if (!name || price === undefined || availableQuantity === undefined || !avgDeliveryTimeDays)
             return res.status(400).json({ message: 'Campos obrigatórios' })
 
         const product = await this.productRepository.findByName(name)
         if (!product)
             return res.status(404).json({ message: 'Produto não encontrado' })
 
-        const exists = await this.supplierProductRepository.find(req.supplier, product);
+        const exists = await this.supplierProductRepository.find(req.supplier!, product);
         if (exists)
             return res.status(409).json({ message: 'Produto já ofertado por este fornecedor' })
 
         const supplierProduct = new SupplierProduct({
-            supplier: req.supplier,
+            supplier: req.supplier!,
             product,
             price,
             availableQuantity,
-            avgDeliveryTime
+            avgDeliveryTimeDays
         })
 
         await this.supplierProductRepository.createAndSave(supplierProduct)
@@ -47,7 +47,7 @@ export class SupplierProductController {
         const {
             price,
             availableQuantity,
-            avgDeliveryTime
+            avgDeliveryTimeDays
         } = req.body
 
         if (price !== undefined)
@@ -56,8 +56,8 @@ export class SupplierProductController {
         if (availableQuantity !== undefined)
             supplierProduct.availableQuantity = availableQuantity
 
-        if (avgDeliveryTime)
-            supplierProduct.avgDeliveryTime = avgDeliveryTime
+        if (avgDeliveryTimeDays)
+            supplierProduct.avgDeliveryTimeDays = avgDeliveryTimeDays
 
         await this.supplierProductRepository.save(supplierProduct)
         return res.status(204).end()
@@ -65,7 +65,7 @@ export class SupplierProductController {
 
     static async delete(req: Request, res: Response): Promise<Response> {
         const supplierProduct = req.supplierProduct!;
-        await this.supplierProductRepository.remove(req.supplier!, supplierProduct)
+        await this.supplierProductRepository.remove(req.supplier!, supplierProduct.product)
         return res.status(204).end()
     }
 }

@@ -11,6 +11,9 @@ export class Product {
   @Column({ nullable: true })
   public description!: string;
 
+  @Column({ nullable: true})
+  public category!: string;
+
   @OneToMany(() => SupplierProduct, sp => sp.product)
   public supplierProducts!: SupplierProduct[];
 
