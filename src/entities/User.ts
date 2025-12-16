@@ -5,20 +5,29 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Generated,
-  AfterLoad
+  AfterLoad,
+  OneToOne,
+  ManyToMany,
+  JoinTable
 } from 'typeorm'
 
-import { CryptService } from '../services/CryptService'
 import { randomUUID } from 'crypto'
+import { CryptService } from '../services/CryptService'
+
+import { NGO } from './NGO'
+import { Supplier } from './Supplier'
 
 export enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin',
-  ONG_MANAGER = 'ongManager',
-  ONG_EMPLOYER = 'ongEmployer',
-  SUPPLIER_ADMIN = 'supplierAdmin',
-  SUPPLIER_EMPLOYER = 'supplierEmployer',
-  PROVIDER_MANAGER = 'providerManager'
+  USER              = 'user',
+  ADMIN             = 'admin',
+  
+  NGO_OWNER         = 'ngoOwner',         /* On Future */
+  NGO_MANAGER       = 'ngoManager',
+  NGO_EMPLOYER      = 'ngoEmployer',
+
+  SUPPLIER_OWNER    = 'supplierOwner',    /* On Future */
+  SUPPLIER_MANAGER  = 'supplierManager',
+  SUPPLIER_EMPLOYER = 'supplierEmployer'
 }
 
 @Entity('usertbl')
@@ -42,6 +51,28 @@ export class User {
   @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
   public role!: UserRole
 
+  @OneToOne(() => NGO, ngo => ngo.manager)
+  public managedNGO?: NGO
+
+  @OneToOne(() => Supplier, supplier => supplier.manager)
+  public managedSupplier?: Supplier
+
+  @ManyToMany(() => NGO)
+  @JoinTable({
+    name: 'user_ngo_employments',
+    joinColumn: { name: 'user_uuid', referencedColumnName: 'uuid' },
+    inverseJoinColumn: { name: 'ngo_uuid', referencedColumnName: 'uuid' }
+  })
+  public employedNGOs?: NGO[]
+
+  @ManyToMany(() => Supplier)
+  @JoinTable({
+    name: 'user_supplier_employments',
+    joinColumn: { name: 'user_uuid', referencedColumnName: 'uuid' },
+    inverseJoinColumn: { name: 'supplier_uuid', referencedColumnName: 'uuid' }
+  })
+  public employedSuppliers?: Supplier[]
+
   private previous_password!: string
 
   @AfterLoad()
@@ -52,13 +83,12 @@ export class User {
   @BeforeInsert()
   @BeforeUpdate()
   private async beforeInsert(): Promise<void> {
-    if (!this.uuid) this.uuid = randomUUID();
-
+    if (!this.uuid) this.uuid = randomUUID()
     if (this.password !== this.previous_password)
-      this.password = await CryptService.hash(this.password);
+      this.password = await CryptService.hash(this.password)
   }
 
   public constructor(partial?: Partial<User>) {
     Object.assign(this, partial)
   }
-}  
+}

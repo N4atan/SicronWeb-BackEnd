@@ -6,7 +6,7 @@ import { UserRepository } from "../repositories/UserRepository";
 
 const userRepo = new UserRepository();
 
-export async function loginPrivillege(req: Request, res: Response, next: NextFunction) {
+export async function authorizeSelfOrAdmin(req: Request, res: Response, next: NextFunction) {
     try {
         // console.log(`[DEBUG] loginPrivillege called. Params:`, req.params);
         const user: User = req.user!;

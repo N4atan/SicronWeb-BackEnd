@@ -1,4 +1,7 @@
-import { Column, Entity, PrimaryGeneratedColumn, Generated } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn, Generated, JoinColumn, OneToOne, ManyToOne, ManyToMany } from "typeorm";
+
+import { User } from './User';
+import { NGOProduct } from './NGOProduct';
 
 export enum NGOStatus 
 {
@@ -16,9 +19,6 @@ export class NGO
     @Column({unique: true, length: 36})
     @Generated('uuid')
     public uuid!: string;
-
-    @Column()
-    public manager_uuid!: string;
 
     @Column({ unique: true })
     public name!: string;
@@ -53,5 +53,20 @@ export class NGO
     @Column({ type: 'enum', enum: NGOStatus, default: NGOStatus.PENDING})
     public status!: NGOStatus;
 
+    @OneToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
+    @JoinColumn({
+      name: 'manager_uuid',
+      referencedColumnName: 'uuid'
+    })
+    public manager!: User;
+  
+    @Column()
+    @ManyToMany(() => User, user => user.employedNGOs)
+    public employees!: User[];
+
+    @Column()
+    @ManyToOne(() => NGOProduct, { nullable: false })
+    public products!: NGOProduct[];
+    
     public constructor(partial?: Partial<NGO>) { Object.assign(this, partial) }
 }

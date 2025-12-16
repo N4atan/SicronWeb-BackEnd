@@ -1,3 +1,5 @@
+import { FindManyOptions } from "typeorm"; 
+
 import { AppDataSource } from '../config/data-source';
 
 import { SupplierProduct } from '../entities/SupplierProduct';
@@ -13,7 +15,17 @@ export class SupplierProductRepository {
     return await this.repository.save(created);
   }
 
-  public async findBySupplierAndProduct(supplier: Supplier, product: Product): Promise<SupplierProduct | null>
+  public async save(supplier: SupplierProduct): Promise<SupplierProduct>
+  {
+    return await this.repository.save(supplier);	
+  }
+
+  public async findAll(opt?: FindManyOptions<SupplierProduct>): Promise<SupplierProduct[] | null>
+  {
+    return await this.repository.find(opt);
+  }
+
+  public async find(supplier: Supplier, product: Product): Promise<SupplierProduct | null>
   {
     return await this.repository.findOne({
       where: { supplier, product },
@@ -31,7 +43,7 @@ export class SupplierProductRepository {
 
   public async updateData(supplier: Supplier, product: Product, price: number, availableQuantity: number): Promise<void>
   {
-    const entry = await this.findBySupplierAndProduct(supplier, product);
+    const entry = await this.find(supplier, product);
     if (entry) {
       entry.price = price;
       entry.availableQuantity = availableQuantity;
@@ -39,9 +51,9 @@ export class SupplierProductRepository {
     }
   }
 
-  public async deleteBySupplierAndProduct(supplier: Supplier, product: Product): Promise<void>
+  public async remove(supplier: Supplier, product: Product): Promise<void>
   {
-    const entry = await this.findBySupplierAndProduct(supplier, product);
+    const entry = await this.find(supplier, product);
     if (entry) await this.repository.remove(entry);
   }
 }

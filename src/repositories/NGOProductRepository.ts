@@ -1,3 +1,4 @@
+import { FindManyOptions } from "typeorm";
 import { AppDataSource } from '../config/data-source';
 
 import { NGOProduct } from '../entities/NGOProduct';
@@ -13,7 +14,18 @@ export class NGOProductRepository {
     return await this.repository.save(created);
   }
 
-  public async findByNGOAndProduct(ngo: NGO, product: Product): Promise<NGOProduct | null>
+  
+  public async save(product: NGOProduct): Promise<NGOProduct>
+  {
+    return await this.repository.save(product);	
+  }
+
+  public async findAll(opt?: FindManyOptions<NGOProduct>): Promise<NGOProduct[] | null>
+  {
+    return await this.repository.find(opt);
+  }
+
+  public async find(ngo: NGO, product: Product): Promise<NGOProduct | null>
   {
     return await this.repository.findOne({
       where: { ngo, product },
@@ -31,16 +43,16 @@ export class NGOProductRepository {
 
   public async updateQuantity(ngo: NGO, product: Product, quantity: number): Promise<void>
   {
-    const entry = await this.findByNGOAndProduct(ngo, product);
+    const entry = await this.find(ngo, product);
     if (entry) {
-      entry.requiredQuantity = quantity;
+      entry.quantity = quantity;
       await this.repository.save(entry);
     }
   }
 
-  public async deleteByNGOAndProduct(ngo: NGO, product: Product): Promise<void>
+  public async remove(ngo: NGO, product: Product): Promise<void>
   {
-    const entry = await this.findByNGOAndProduct(ngo, product);
+    const entry = await this.find(ngo, product);
     if (entry) await this.repository.remove(entry);
   }
 }

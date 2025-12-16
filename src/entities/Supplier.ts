@@ -1,7 +1,10 @@
-import { Entity, Generated, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
+import { Entity, Generated, PrimaryGeneratedColumn, Column, ManyToMany, OneToMany, OneToOne, JoinColumn } from 'typeorm';
 
-import { SupplierProduct        } from './SupplierProduct';
+import { User } from './User';
+
+import { SupplierProduct } from './SupplierProduct';
 import { SupplierPaymentReceipt } from './SupplierPaymentReceipt';
+
 
 @Entity('suppliers')
 export class Supplier {
@@ -14,6 +17,17 @@ export class Supplier {
 
   @Column()
   public companyName!: string;
+
+  @OneToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({
+     name: 'manager_uuid',
+     referencedColumnName: 'uuid'
+  })
+  public manager!: User;
+
+  @Column()
+  @ManyToMany(() => User, user => user.employedSuppliers)
+  public employees!: User[];
 
   @Column()
   public tradeName!: string;

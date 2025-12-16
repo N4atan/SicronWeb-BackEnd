@@ -1,3 +1,5 @@
+import { FindManyOptions } from "typeorm";
+
 import { AppDataSource } from '../config/data-source';
 
 import { UserDonationReceipt } from '../entities/UserDonationReceipt';
@@ -11,6 +13,16 @@ export class UserDonationReceiptRepository {
   {
     const created = this.repository.create(receipt);
     return await this.repository.save(created);
+  }
+
+  public async save(receipt: UserDonationReceipt): Promise<UserDonationReceipt>
+  {
+    return await this.repository.save(receipt);
+  }
+  
+  public async findAll(opt?: FindManyOptions<UserDonationReceipt>): Promise<UserDonationReceipt[] | null>
+  {
+    return await this.repository.find(opt);
   }
 
   public async findByUUID(uuid: string): Promise<UserDonationReceipt | null>
@@ -39,7 +51,7 @@ export class UserDonationReceiptRepository {
     });
   }
 
-  public async deleteByUUID(uuid: string): Promise<void>
+  public async remove(uuid: string): Promise<void>
   {
     const receipt = await this.findByUUID(uuid);
     if (receipt) await this.repository.remove(receipt);

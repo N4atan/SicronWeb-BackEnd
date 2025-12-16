@@ -1,17 +1,18 @@
 import { Router } from "express";
 import { NGOController } from "../controllers/NGOController";
-import { loginChecker           } from "../middlewares/loginChecker";
-import { loginRequire           } from "../middlewares/loginRequire";
-import { loginManagerPrivillege } from "../middlewares/loginManagerPrivillege";
+
+import { UserRole } from "../entities/User";
+
+import { authenticateUser } from "../middlewares/authenticateUser";
+import { resolveNGOAccess } from "../middlewares/resolveNGOAccess";
+
 let router: Router = Router();
-router.use(loginChecker);
-// Rotas Públicas (ou semi-públicas)
-router.get("/", NGOController.query);
-router.use(loginRequire);
-// Rotas Autenticadas
-router.post("/", NGOController.register);
-// REMOVIDO: router.use(loginManagerPrivillege); <--- ISSO CAUSAVA O ERRO
-// ADICIONADO: Middleware injetado diretamente na rota, após o path '/:uuid'
-router.patch("/:uuid", loginManagerPrivillege, NGOController.update);
-router.delete("/:uuid", loginManagerPrivillege, NGOController.delete);
+
+router.get("/", authenticateUser(false), NGOController.query);
+
+router.post("/", authenticateUser(true), NGOController.register);
+
+router.patch("/:uuid", authenticateUser(true, [UserRole.NGO_MANAGER, UserRole.ADMIN, UserRole.NGO_EMPLOYER]), resolveNGOAccess, NGOController.update);
+router.delete("/:uuid", authenticateUser(true, [UserRole.NGO_MANAGER, UserRole.ADMIN]), resolveNGOAccess, NGOController.delete);
+
 export default router;

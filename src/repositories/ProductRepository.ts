@@ -1,3 +1,5 @@
+import { FindManyOptions } from "typeorm";
+
 import { AppDataSource } from '../config/data-source';
 
 import { Product } from '../entities/Product';
@@ -10,6 +12,16 @@ export class ProductRepository {
     const created = this.repository.create(product);
     return await this.repository.save(created);
   }
+  
+  public async save(product: Product): Promise<Product>
+  {
+    return await this.repository.save(product);	
+  }
+
+  public async findAll(opt?: FindManyOptions<Product>): Promise<Product[] | null>
+  {
+    return await this.repository.find(opt);
+  }
 
   public async findByName(name: string): Promise<Product | null>
   {
@@ -21,7 +33,7 @@ export class ProductRepository {
     return await this.repository.find();
   }
 
-  public async delete(name: string): Promise<void>
+  public async remove(name: string): Promise<void>
   {
     const product = await this.findByName(name);
     if (product) await this.repository.remove(product);
