@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 
 import { Supplier } from '../entities/Supplier'
 import { UserRole } from '../entities/User'
+import { ApprovalStatus } from "../entities/ApprovalStatus";
 
 import { SupplierRepository } from '../repositories/SupplierRepository'
 import { UserRepository } from '../repositories/UserRepository'
@@ -67,6 +68,7 @@ export class SupplierController
     if (companyName) filters.companyName = String(companyName)
     if (tradeName)   filters.tradeName   = String(tradeName)
     if (cnpj)        filters.cnpj        = String(cnpj)
+    if (status)      filters.status      = String(status).toUpperCase() as ApprovalStatus
 
     const list = await this.supplierRepository.findAll({ where: filters })
     return res.status(200).json({ suppliers: list })
@@ -100,10 +102,11 @@ export class SupplierController
   static async update(req: Request, res: Response): Promise<Response>
   {
     const supplier = req.supplier!
-
+    
     if (
-      supplier.manager.uuid !== req.user!.uuid &&
-      req.user!.role !== UserRole.ADMIN
+      supplier.status !== ApprovalStatus.APPROVED &&
+      req.user!.role !== UserRole.ADMIN &&
+      supplier.manager.uuid !== req.user!.uuid
     )
       return res.status(403).json({ message: 'Permissão negada' })
 
@@ -116,6 +119,7 @@ export class SupplierController
       city,
       state,
       postalCode,
+      status,
       manager_uuid
     } = req.body
 
@@ -139,6 +143,8 @@ export class SupplierController
 
       supplier.manager = newManager
     }
+
+    if (status && req.user!.role === UserRole.ADMIN) supplier.status = status.toUpperCase() as ApprovalStatus;
 
     await this.supplierRepository.save(supplier)
     return res.status(204).send()

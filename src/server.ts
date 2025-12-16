@@ -5,11 +5,9 @@ import helmet                   from 'helmet';
 import rateLimit                from 'express-rate-limit';
 
 import { AppDataSource } from "./config/data-source";
-
-import UserRoutes from './routers/UserRoutes';
-import NGORoutes  from './routers/NGORoutes';
-
 import { errorHandler } from './middlewares/errorHandler';
+
+import IndexRouter from './routers/index';
 
 const app:  Application = express();
 const port: number      = Number(process.env.PORT) || 3000;
@@ -41,8 +39,7 @@ app.use(rateLimit({
 	message: { message: "Muitas requisições. Tente novamente mais tarde." }
 }));
 
-app.use("/user", UserRoutes);
-app.use("/ngo",  NGORoutes); 
+app.use("/", IndexRouter);
 
 app.get("/", (_req, res) => {
     res.status(201).json({message: "Server is up."});

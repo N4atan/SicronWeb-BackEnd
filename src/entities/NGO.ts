@@ -3,12 +3,7 @@ import { Column, Entity, PrimaryGeneratedColumn, Generated, JoinColumn, OneToOne
 import { User } from './User';
 import { NGOProduct } from './NGOProduct';
 
-export enum NGOStatus 
-{
-    PENDING  = 'pending',
-    APPROVED = 'approved',
-    REJECTED = 'rejected'
-}
+import { ApprovalStatus } from './ApprovalStatus';
 
 @Entity('ngotbl')
 export class NGO
@@ -50,8 +45,8 @@ export class NGO
     @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
     public creation_date!: Date;
 
-    @Column({ type: 'enum', enum: NGOStatus, default: NGOStatus.PENDING})
-    public status!: NGOStatus;
+    @Column({ type: 'enum', enum: ApprovalStatus, default: ApprovalStatus.PENDING})
+    public status!: ApprovalStatus;
 
     @OneToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
     @JoinColumn({
