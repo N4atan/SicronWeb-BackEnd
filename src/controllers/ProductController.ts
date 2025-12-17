@@ -38,7 +38,10 @@ export class ProductController {
         if (category) filters.category = String(category)
         if (description) filters.description = String(description);
 
-        const list = await ProductController.productRepository.findAll({ where: filters })
+        const list = await ProductController.productRepository.findAll({
+            where: filters,
+            relations: ['supplierProducts']
+        })
         return res.status(200).json({ products: list })
     }
 
