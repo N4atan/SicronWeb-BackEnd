@@ -9,6 +9,7 @@ import {RefreshService} from '../services/RefreshService';
 import {TokenService, UserPayload} from '../services/TokenService';
 import {AuthUtil} from '../utils/authUtil';
 import {setSessionIdSessionCookie} from '../utils/cookieUtils';
+import logger from '../utils/logger'; 
 
 /**
  * Controller for managing User operations and Authentication.
@@ -70,12 +71,16 @@ export class UserController
                 await UserController.userRepo.findByUUID(
                     req.user!.uuid) as Partial<User>;
 
+	    logger.debug('Logged');
             if (userWithRelations) {
                 const safe = {...userWithRelations} as Partial<User>;
                 delete (safe as any).password;
+		logger.table(safe);
                 return res.status(200).json(safe);
             }
         }
+
+	logger.debug('Not logged');
         return res.status(401).send();
     }
 
@@ -90,6 +95,8 @@ export class UserController
     static async login(req: Request, res: Response): Promise<Response>
     {
         const {email, password} = req.body;
+	if (req.logged) return res.status(400).send();
+
         if (!email || !password)
             return res.status(400).json(
                 {message: 'E-Mail ou senha não foram fornecidos!'});
@@ -141,7 +148,6 @@ export class UserController
         const payload =
             TokenService.verifyRefresh(token) as UserPayload;
 
-
         const sessionId =
             (req.cookies[COOKIE_NAMES.SESSION_ID] as string) ||
             undefined;
@@ -166,8 +172,7 @@ export class UserController
             });
 
         await AuthUtil.refresh(res, user, token, sessionId);
-
-        return res.status(204).send();
+	return this.isLogged(req, res);
     }
 
     /**
