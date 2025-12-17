@@ -4,6 +4,7 @@
 export const COOKIE_NAMES = {
     ACCESS_TOKEN: 'accessToken',
     REFRESH_TOKEN: 'refreshToken',
+    DEVICE_ID: 'deviceId',
 };
 
 /**
@@ -37,3 +38,11 @@ export function getCookieOptions() {
         domain,
     } as const;
 }
+
+export const DEVICE_COOKIE_OPTIONS = {
+    httpOnly: false,
+    secure: process.env.COOKIE_SECURE ? process.env.COOKIE_SECURE === 'true' : process.env.NODE_ENV === 'production',
+    sameSite: (process.env.COOKIE_SAMESITE as 'lax' | 'strict' | 'none' | undefined) || 'lax',
+    domain: process.env.COOKIE_DOMAIN || undefined,
+    maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
+} as const;

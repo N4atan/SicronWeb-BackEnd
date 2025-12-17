@@ -95,13 +95,20 @@ export class UserController
 
         const user = await UserController.userRepo.findByEmail(email);
 
-        if (!user || !user.id ||
-            !(await CryptService.compare(password, user.password))) {
-            return res.status(404).json(
-                {message: 'E-Mail e/ou senha estão incorretos.'});
+        if (!user || !user.id || !(await CryptService.compare(password, user.password))) {
+            return res.status(404).json({ message: 'E-Mail e/ou senha estão incorretos.' });
         }
 
-        await AuthUtil.login(res, user, req.ip || '');
+        // Determine device identifier: prefer explicit cookie,
+        // then header. If none present, generate one and set
+        // it for the client.
+        let deviceId = req.cookies[COOKIE_NAMES.DEVICE_ID] as string | undefined;
+        if (!deviceId) deviceId = (req.headers['x-device-id'] as string) || undefined;
+        if (!deviceId) {
+            deviceId = require('crypto').randomUUID();
+        }
+
+        await AuthUtil.login(res, user, deviceId);
 
         return res.status(204).send();
     }
@@ -147,8 +154,9 @@ export class UserController
         Promise<Response>
     {
         const token = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
+        const deviceId = (req.cookies[COOKIE_NAMES.DEVICE_ID] as string) || (req.headers['x-device-id'] as string) || undefined;
 
-        await AuthUtil.logout(res, token, req.ip || '');
+        await AuthUtil.logout(res, token, deviceId);
 
         return res.status(204).send();
     }
@@ -163,21 +171,18 @@ export class UserController
     static async query(req: Request, res: Response): Promise<Response>
     {
         const user = req.user!;
-        const {uuid, email, name} = req.query;
+        const token = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
 
-        const filters: Record<string, unknown> = {};
+        const payload = TokenService.verifyRefresh(token) as UserPayload;
 
-        if (uuid) filters.uuid = String(uuid);
+        const deviceId = (req.cookies[COOKIE_NAMES.DEVICE_ID] as string) || (req.headers['x-device-id'] as string) || undefined;
 
-        // Prevent Email Enumeration: Only admins can search by
-        // E-Mail.
-        if (email && user?.role === UserRole.ADMIN) {
-            filters.email = String(email);
-        }
+        if (!(await RefreshService.isValid(payload.id, token, deviceId)) || user.uuid !== payload.id || !user.uuid)
+            return res.status(403).json({ message: 'Dados inválidos fornecidos ao serviço de autentificação!' });
 
-        if (name) filters.name = String(name);
+        await AuthUtil.refresh(res, user, token, deviceId);
 
-        const users =
+        return res.status(204).send();
             await UserController.userRepo.findAll({where: filters});
         const safeUsers = users.map((u) => {
             const userResponse = {...u};

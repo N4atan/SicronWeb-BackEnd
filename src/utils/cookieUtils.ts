@@ -1,6 +1,6 @@
 import {Response} from 'express';
 
-import {COOKIE_NAMES, getCookieOptions, TOKEN_EXPIRATION,} from '../config/cookies';
+import {COOKIE_NAMES, getCookieOptions, TOKEN_EXPIRATION, DEVICE_COOKIE_OPTIONS} from '../config/cookies';
 
 /**
  * Sets authentication cookies (Refresh and Access tokens).
@@ -34,4 +34,12 @@ export const clearAuthCookies = (res: Response) => {
     const options = getCookieOptions();
     res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, options);
     res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, options);
+};
+
+export const setDeviceIdCookie = (res: Response, deviceId: string) => {
+    res.cookie(COOKIE_NAMES.DEVICE_ID, deviceId, DEVICE_COOKIE_OPTIONS);
+};
+
+export const clearDeviceIdCookie = (res: Response) => {
+    res.clearCookie(COOKIE_NAMES.DEVICE_ID, DEVICE_COOKIE_OPTIONS);
 };

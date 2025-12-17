@@ -1,9 +1,13 @@
 import redisClient from '../config/redis';
 
-const REFRESH_EXPIRE_SECONDS = 7 * 24 * 60 * 60;  // 7 Days in seconds
+const REFRESH_EXPIRE_SECONDS = 7 * 24 * 60 * 60; // 7 Days in seconds
 
 /**
  * Service for managing Refresh Tokens via Redis.
+ *
+ * Tokens are bound to a device identifier (deviceId) instead of
+ * client IP. This allows sessions to persist across IP changes
+ * for the same device while still enabling per-device revocation.
  */
 export class RefreshService
 {
@@ -15,12 +19,11 @@ export class RefreshService
      * @param ip - Client IP address.
      * @returns Promise<void>
      */
-    static async save(uuid: string, token: string, ip: string):
+    static async save(uuid: string, token: string, deviceId: string):
         Promise<void>
     {
-        const key = `refresh_token:${uuid}:${ip}`;
-        await redisClient.set(
-            key, token, 'EX', REFRESH_EXPIRE_SECONDS);
+        const key = `refresh_token:${uuid}:${deviceId}`;
+        await redisClient.set(key, token, 'EX', REFRESH_EXPIRE_SECONDS);
     }
 
     /**
@@ -34,15 +37,47 @@ export class RefreshService
     static async isValid(
         uuid: string,
         token: string,
-        ip: string|undefined,
-        ): Promise<boolean>
+        deviceId?: string|undefined,
+    ): Promise<boolean>
     {
-        if (!ip) return false;
+        // If deviceId provided, check the exact key.
+        if (deviceId) {
+            const key = `refresh_token:${uuid}:${deviceId}`;
+            const storedToken = await redisClient.get(key);
+            return storedToken === token;
+        }
 
-        const key = `refresh_token:${uuid}:${ip}`;
-        const storedToken = await redisClient.get(key);
+        // Fallback: scan all tokens for this user and see if any
+        // matches. This allows a graceful transition if deviceId
+        // is not available yet. It's less strict but avoids
+        // breaking active sessions while migration occurs.
+        return new Promise<boolean>((resolve, reject) => {
+            const stream = redisClient.scanStream({ match: `refresh_token:${uuid}:*` });
+            let found = false;
 
-        return storedToken === token;
+            stream.on('data', async (keys: string[]) => {
+                if (found) return;
+                if (!keys.length) return;
+                try {
+                    const pipeline = redisClient.pipeline();
+                    keys.forEach((k) => pipeline.get(k));
+                    const results = await pipeline.exec() || [];
+                    for (const [, value] of results) {
+                        if (value === token) {
+                            found = true;
+                            stream.destroy();
+                            return resolve(true);
+                        }
+                    }
+                } catch (err) {
+                    stream.destroy();
+                    return reject(err);
+                }
+            });
+
+            stream.on('end', () => resolve(found));
+            stream.on('error', (err: unknown) => reject(err));
+        });
     }
 
     /**
@@ -53,39 +88,37 @@ export class RefreshService
      *     revokes ALL tokens for user.
      * @returns Promise<void>
      */
-    static async revoke(uuid: string, ip?: string): Promise<void>
+    static async revoke(uuid: string, deviceId?: string): Promise<void>
     {
-        if (ip) {
-            const key = `refresh_token:${uuid}:${ip}`;
+        if (deviceId) {
+            const key = `refresh_token:${uuid}:${deviceId}`;
             await redisClient.del(key);
+            return;
         }
-        else {
-            return new Promise((resolve, reject) => {
-                const stream = redisClient.scanStream({
-                    match: `refresh_token:${uuid}:*`,
-                });
 
-                const pipelines: Promise<unknown>[] = [];
+        // Revoke all device tokens for this user.
+        return new Promise((resolve, reject) => {
+            const stream = redisClient.scanStream({ match: `refresh_token:${uuid}:*` });
+            const pipelines: Promise<unknown>[] = [];
 
-                stream.on('data', (keys: string[]) => {
-                    if (keys.length) {
-                        const pipeline = redisClient.pipeline();
-                        keys.forEach((key) => pipeline.del(key));
-                        pipelines.push(pipeline.exec());
-                    }
-                });
-
-                stream.on('end', async () => {
-                    try {
-                        await Promise.all(pipelines);
-                        resolve();
-                    } catch (err) {
-                        reject(err);
-                    }
-                });
-
-                stream.on('error', (err: unknown) => reject(err));
+            stream.on('data', (keys: string[]) => {
+                if (keys.length) {
+                    const pipeline = redisClient.pipeline();
+                    keys.forEach((key) => pipeline.del(key));
+                    pipelines.push(pipeline.exec());
+                }
             });
-        }
+
+            stream.on('end', async () => {
+                try {
+                    await Promise.all(pipelines);
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                }
+            });
+
+            stream.on('error', (err: unknown) => reject(err));
+        });
     }
 }

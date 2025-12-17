@@ -4,7 +4,7 @@ import {User} from '../entities/User';
 import {RefreshService} from '../services/RefreshService';
 import {TokenService, UserPayload} from '../services/TokenService';
 
-import {clearAuthCookies, setAuthCookies} from './cookieUtils';
+import {clearAuthCookies, setAuthCookies, setDeviceIdCookie, clearDeviceIdCookie} from './cookieUtils';
 
 /**
  * Utility class for Authentication operations.
@@ -19,15 +19,21 @@ export class AuthUtil
      * @param user - User object.
      * @param ip - Client IP.
      */
-    static async login(res: Response, user: User, ip: string)
+    static async login(res: Response, user: User, deviceId: string)
     {
-        const tokens = TokenService.generateTokenPair({
-            id: user.uuid,
-            email: user.email,
-        });
+        const tokens = TokenService.generateTokenPair({ id: user.uuid, email: user.email });
 
-        await RefreshService.save(user.uuid, tokens.refreshToken, ip);
+        await RefreshService.save(user.uuid, tokens.refreshToken, deviceId);
         setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
+
+        // Ensure the client has a persistent deviceId cookie for
+        // future session checks. deviceId is intentionally not
+        // httpOnly so client code can persist/reuse it.
+        try {
+            setDeviceIdCookie(res, deviceId);
+        } catch {
+            // Non-fatal: just continue.
+        }
     }
 
     /**
@@ -37,19 +43,19 @@ export class AuthUtil
      * @param token - Refresh Token string.
      * @param ip - Client IP.
      */
-    static async logout(
-        res: Response, token: string|undefined, ip: string)
+    static async logout(res: Response, token: string|undefined, deviceId?: string)
     {
         if (token) {
             try {
-                const payload =
-                    TokenService.verifyRefresh(token) as UserPayload;
-                await RefreshService.revoke(payload.id, ip);
+                const payload = TokenService.verifyRefresh(token) as UserPayload;
+                await RefreshService.revoke(payload.id, deviceId);
             } catch {
                 // Ignore invalid token on logout
             }
         }
+
         clearAuthCookies(res);
+        clearDeviceIdCookie(res);
     }
 
     /**
@@ -60,20 +66,15 @@ export class AuthUtil
      * @param oldToken - Old Refresh Token.
      * @param ip - Client IP.
      */
-    static async refresh(
-        res: Response, user: User, oldToken: string, ip: string)
+    static async refresh(res: Response, user: User, oldToken: string, deviceId?: string)
     {
-        const newTokens = TokenService.generateTokenPair({
-            id: user.uuid,
-            email: user.email,
-        });
+        const newTokens = TokenService.generateTokenPair({ id: user.uuid, email: user.email });
 
-        await RefreshService.revoke(user.uuid, ip);
-        await RefreshService.save(
-            user.uuid, newTokens.refreshToken, ip);
+        await RefreshService.revoke(user.uuid, deviceId);
+        await RefreshService.save(user.uuid, newTokens.refreshToken, deviceId || user.uuid);
 
-        setAuthCookies(
-            res, newTokens.accessToken, newTokens.refreshToken);
+        setAuthCookies(res, newTokens.accessToken, newTokens.refreshToken);
+        if (deviceId) setDeviceIdCookie(res, deviceId);
     }
 
     /**
