@@ -4,6 +4,7 @@ import {AppDataSource} from '../config/data-source';
 import {NGO} from '../entities/NGO';
 import {User} from '../entities/User';
 import {UserDonationReceipt} from '../entities/UserDonationReceipt';
+import logger from '../utils/logger';
 
 /**
  * Repository for User Donation Receipts.
@@ -23,7 +24,9 @@ export class UserDonationReceiptRepository
         ): Promise<UserDonationReceipt>
     {
         const created = this.repository.create(receipt);
-        return await this.repository.save(created);
+        const saved = await this.repository.save(created);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -35,7 +38,9 @@ export class UserDonationReceiptRepository
         receipt: UserDonationReceipt,
         ): Promise<UserDonationReceipt>
     {
-        return await this.repository.save(receipt);
+        const saved = await this.repository.save(receipt);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -47,7 +52,9 @@ export class UserDonationReceiptRepository
         opt?: FindManyOptions<UserDonationReceipt>,
         ): Promise<UserDonationReceipt[]|null>
     {
-        return await this.repository.find(opt);
+        const found = await this.repository.find(opt);
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -58,10 +65,12 @@ export class UserDonationReceiptRepository
     public async findByUUID(uuid: string):
         Promise<UserDonationReceipt|null>
     {
-        return await this.repository.findOne({
+        const found = await this.repository.findOne({
             where: {uuid},
             relations: ['user', 'ngo', 'ngo.manager'],
         });
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -72,11 +81,13 @@ export class UserDonationReceiptRepository
     public async listByUser(user: User):
         Promise<UserDonationReceipt[]>
     {
-        return await this.repository.find({
+        const list = await this.repository.find({
             where: {user},
             relations: ['ngo'],
             order: {donationDate: 'DESC'},
         });
+        logger.table(list);
+        return list;
     }
 
     /**
@@ -86,11 +97,13 @@ export class UserDonationReceiptRepository
      */
     public async listByNGO(ngo: NGO): Promise<UserDonationReceipt[]>
     {
-        return await this.repository.find({
+        const list = await this.repository.find({
             where: {ngo},
             relations: ['user'],
             order: {donationDate: 'DESC'},
         });
+        logger.table(list);
+        return list;
     }
 
     /**

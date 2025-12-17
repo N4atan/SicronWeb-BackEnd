@@ -39,7 +39,7 @@ export class App
         this.app.use(cookieParser());
         this.app.use(express.json());
         this.app.use(compression());
-
+        
         // Configure CORS: prefer explicit allowlist via
         // ALLOWED_ORIGINS; fall back to permissive in
         // non-production for developer convenience.

@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit",
     "docs": "npm run docs:html",
     "docs:html": "typedoc --out docs/html",
-    "docs:md": "typedoc --out docs/markdown --plugin typedoc-plugin-markdown"
+    "docs:md": "typedoc --out docs/markdown --plugin typedoc-plugin-markdown",
+    "test:runtime": "node tests/run.js"
   },
   "keywords": [],
   "author": "",

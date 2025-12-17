@@ -2,6 +2,7 @@ import {FindManyOptions} from 'typeorm';
 
 import {AppDataSource} from '../config/data-source';
 import {Product} from '../entities/Product';
+import logger from '../utils/logger';
 
 /**
  * Repository for Product operations.
@@ -18,7 +19,9 @@ export class ProductRepository
     public async createAndSave(product: Product): Promise<Product>
     {
         const created = this.repository.create(product);
-        return await this.repository.save(created);
+        const saved = await this.repository.save(created);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -28,7 +31,9 @@ export class ProductRepository
      */
     public async save(product: Product): Promise<Product>
     {
-        return await this.repository.save(product);
+        const saved = await this.repository.save(product);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -40,7 +45,9 @@ export class ProductRepository
         opt?: FindManyOptions<Product>,
         ): Promise<Product[]|null>
     {
-        return await this.repository.find(opt);
+        const found = await this.repository.find(opt);
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -50,7 +57,9 @@ export class ProductRepository
      */
     public async findByName(name: string): Promise<Product|null>
     {
-        return await this.repository.findOne({where: {name}});
+        const found = await this.repository.findOne({where: {name}});
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -59,7 +68,9 @@ export class ProductRepository
      */
     public async listAll(): Promise<Product[]>
     {
-        return await this.repository.find();
+        const list = await this.repository.find();
+        logger.table(list);
+        return list;
     }
 
     /**

@@ -4,6 +4,7 @@ import {AppDataSource} from '../config/data-source';
 import {NGO} from '../entities/NGO';
 import {Supplier} from '../entities/Supplier';
 import {User} from '../entities/User';
+import logger from '../utils/logger';
 
 import {NGORepository} from './NGORepository';
 import {SupplierRepository} from './SupplierRepository';
@@ -24,7 +25,9 @@ export class UserRepository
     public async createAndSave(data: Partial<User>): Promise<User>
     {
         const user = this.repository.create(data);
-        return this.repository.save(user);
+        const saved = await this.repository.save(user);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -35,7 +38,9 @@ export class UserRepository
     public async findAll(options?: FindManyOptions<User>):
         Promise<User[]>
     {
-        return this.repository.find(options);
+        const found = await this.repository.find(options);
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -62,7 +67,7 @@ export class UserRepository
      */
     public async findByUUID(uuid: string): Promise<User|null>
     {
-        return this.repository.findOne({
+        const found = await this.repository.findOne({
             where: {uuid},
             relations: [
                 'managedNGO',
@@ -71,6 +76,8 @@ export class UserRepository
                 'employedSuppliers',
             ],
         });
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -80,7 +87,9 @@ export class UserRepository
      */
     public async findByEmail(email: string): Promise<User|null>
     {
-        return this.repository.findOneBy({email});
+        const found = await this.repository.findOneBy({email});
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -90,7 +99,9 @@ export class UserRepository
      */
     public async save(user: User): Promise<User>
     {
-        return this.repository.save(user);
+        const saved = await this.repository.save(user);
+        logger.table(saved);
+        return saved;
     }
 
     /**

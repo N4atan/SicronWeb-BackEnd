@@ -11,6 +11,7 @@ process.env.BCRYPT_SALT_HASHES = '10';
 
 import 'reflect-metadata';
 import {DataSource} from 'typeorm';
+import logger from '../utils/logger';
 
 import {User} from '../entities/User';
 import {NGO} from '../entities/NGO';
@@ -44,30 +45,30 @@ async function verify()
         ],
     });
 
-    console.log('Initializing Verification DataSource...');
+    logger.info('Initializing Verification DataSource...');
     try {
         await TestDataSource.initialize();
-        console.log('DataSource Initialized Successfully!');
+        logger.info('DataSource Initialized Successfully!');
     } catch (error: unknown) {
-        console.error('Connection Failed:', (error as Error).message);
+        logger.error('Connection Failed:', (error as Error).message);
         process.exit(1);
     }
 
     try {
-        console.log('Checking Metadata Loading...');
+        logger.info('Checking Metadata Loading...');
         const meta = TestDataSource.entityMetadatas;
-        console.log(`Loaded ${meta.length} entities.`);
+        logger.info(`Loaded ${meta.length} entities.`);
 
         if (meta.length === 0) {
-            console.error(
+            logger.error(
                 'Zero entities loaded! Check entity paths.');
             process.exit(1);
         }
 
-        console.log('Database Verification Successful!');
+        logger.info('Database Verification Successful!');
         process.exit(0);
     } catch (error) {
-        console.error('Metadata Verification Failed:', error);
+        logger.error('Metadata Verification Failed:', error);
         process.exit(1);
     }
 }

@@ -1,6 +1,7 @@
 import {App} from './app';
 import {AppDataSource} from './config/data-source';
 import {ENV} from './config/env';
+import logger from './utils/logger';
 
 const port: number = ENV.PORT;
 
@@ -13,11 +14,11 @@ AppDataSource.initialize()
         const application = new App();
 
         application.app.listen(port, () => {
-            console.log('Server is running on port: ' + port);
+            logger.info('Server is running on port: ' + port);
         });
     })
     .catch((e) => {
-        console.error(
+        logger.error(
             'An error has occurred during program initialization: ' +
             e);
     });

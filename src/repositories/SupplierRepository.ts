@@ -3,6 +3,7 @@ import {FindManyOptions} from 'typeorm';
 import {AppDataSource} from '../config/data-source';
 import {Supplier} from '../entities/Supplier';
 import {User, UserRole} from '../entities/User';
+import logger from '../utils/logger';
 
 /**
  * Repository for Supplier operations.
@@ -19,7 +20,9 @@ export class SupplierRepository
     public async createAndSave(supplier: Supplier): Promise<Supplier>
     {
         const created = this.repository.create(supplier);
-        return await this.repository.save(created);
+        const saved = await this.repository.save(created);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -29,7 +32,9 @@ export class SupplierRepository
      */
     public async save(supplier: Supplier): Promise<Supplier>
     {
-        return await this.repository.save(supplier);
+        const saved = await this.repository.save(supplier);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -41,7 +46,9 @@ export class SupplierRepository
         opt?: FindManyOptions<Supplier>,
         ): Promise<Supplier[]|null>
     {
-        return await this.repository.find(opt);
+        const found = await this.repository.find(opt);
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -63,12 +70,14 @@ export class SupplierRepository
     public async findByUserUUID(uuid: string):
         Promise<Supplier[]|null>
     {
-        return await this.repository.createQueryBuilder('supplier')
+        const list = await this.repository.createQueryBuilder('supplier')
             .leftJoinAndSelect('supplier.manager', 'manager')
             .leftJoinAndSelect('supplier.employees', 'employee')
             .where('manager.uuid = :uuid', {uuid})
             .orWhere('employee.uuid = :uuid', {uuid})
             .getMany();
+        logger.table(list);
+        return list;
     }
 
     /**
@@ -79,7 +88,7 @@ export class SupplierRepository
      */
     public async findByUUID(uuid: string): Promise<Supplier|null>
     {
-        return await this.repository.findOne({
+        const found = await this.repository.findOne({
             where: {uuid},
             relations: [
                 'manager',
@@ -88,6 +97,8 @@ export class SupplierRepository
                 'paymentReceipts'
             ],
         });
+        logger.table(found);
+        return found;
     }
 
     /**

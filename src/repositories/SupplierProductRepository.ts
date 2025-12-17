@@ -4,6 +4,7 @@ import {AppDataSource} from '../config/data-source';
 import {Product} from '../entities/Product';
 import {Supplier} from '../entities/Supplier';
 import {SupplierProduct} from '../entities/SupplierProduct';
+import logger from '../utils/logger';
 
 /**
  * Repository for Supplier Product (Offers) operations.
@@ -22,7 +23,9 @@ export class SupplierProductRepository
         ): Promise<SupplierProduct>
     {
         const created = this.repository.create(supplierProduct);
-        return await this.repository.save(created);
+        const saved = await this.repository.save(created);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -33,7 +36,9 @@ export class SupplierProductRepository
     public async save(supplier: SupplierProduct):
         Promise<SupplierProduct>
     {
-        return await this.repository.save(supplier);
+        const saved = await this.repository.save(supplier);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -45,7 +50,9 @@ export class SupplierProductRepository
         opt?: FindManyOptions<SupplierProduct>,
         ): Promise<SupplierProduct[]|null>
     {
-        return await this.repository.find(opt);
+        const found = await this.repository.find(opt);
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -59,10 +66,12 @@ export class SupplierProductRepository
         product: Product,
         ): Promise<SupplierProduct|null>
     {
-        return await this.repository.findOne({
+        const found = await this.repository.findOne({
             where: {supplier, product},
             relations: ['supplier', 'product'],
         });
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -73,10 +82,12 @@ export class SupplierProductRepository
     public async listBySupplier(supplier: Supplier):
         Promise<SupplierProduct[]>
     {
-        return await this.repository.find({
+        const list = await this.repository.find({
             where: {supplier},
             relations: ['product'],
         });
+        logger.table(list);
+        return list;
     }
 
     /**

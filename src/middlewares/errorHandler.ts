@@ -1,6 +1,7 @@
 import {NextFunction, Request, Response} from 'express';
 
 import {SQLErrorUtil} from '../utils/sqlErrorUtil';
+import logger from '../utils/logger';
 
 /**
  * Global Error Handler Middleware.
@@ -15,6 +16,6 @@ export function errorHandler(
 {
     if (SQLErrorUtil.handle(err, res)) return;
 
-    console.error(`INTERNAL SERVER ERROR:`, err);
+    logger.error(`INTERNAL SERVER ERROR:`, err);
     res.status(500).json({message: 'Internal Server Error'});
 }

@@ -10,10 +10,12 @@ dotenv.config({path: path.join(__dirname, '../../.env')});
  * @returns string - Variable value.
  */
 const getEnv = (key: string, defaultValue?: string): string => {
-    const value = process.env[key] || defaultValue;
-    if (value === undefined) {
+    const raw = process.env[key] || defaultValue;
+    if (raw === undefined) {
         throw new Error(`Environment variable ${key} is missing`);
     }
+    // Trim to avoid issues from trailing newlines or invisible whitespace
+    const value = String(raw).trim();
     return value;
 };
 

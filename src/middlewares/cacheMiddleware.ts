@@ -1,6 +1,7 @@
 import {NextFunction, Request, Response} from 'express';
 
 import getRedisClient from '../config/redis';
+import logger from '../utils/logger';
 
 /**
  * Higher-order middleware function to cache GET responses in Redis.
@@ -16,7 +17,7 @@ export const cacheMiddleware = (durationSeconds: number = 60) => {
         const key = `cache:${req.originalUrl || req.url}`;
 
         try {
-            const client = await getRedisClient();
+            const client = await getRedisClient(); // Outer scope client
             const cachedData = await client.get(key);
             if (cachedData) {
                 res.setHeader('Content-Type', 'application/json');
@@ -38,39 +39,40 @@ export const cacheMiddleware = (durationSeconds: number = 60) => {
                             JSON.stringify(body);
                         (async () => {
                             try {
-                                if (typeof (client as any).setex ===
+                                const cachedClient = await getRedisClient();
+                                if (typeof (cachedClient as any).setex ===
                                     'function') {
-                                    await (client as any)
+                                    await (cachedClient as any)
                                         .setex(
                                             key,
                                             durationSeconds,
                                             dataToStore);
                                 }
                                 else if (
-                                    typeof (client as any).set ===
+                                    typeof (cachedClient as any).set ===
                                     'function') {
                                     try {
-                                        await (client as any)
+                                        await (cachedClient as any)
                                             .set(
                                                 key,
                                                 dataToStore,
                                                 'EX',
                                                 durationSeconds);
                                     } catch (_) {
-                                        await (client as any)
+                                        await (cachedClient as any)
                                             .set(key, dataToStore, {
                                                 EX: durationSeconds
                                             });
                                     }
                                 }
                             } catch (err) {
-                                console.error(
+                                logger.error(
                                     'Redis Cache Error (SET):', err);
                             }
                         })();
                     }
                 } catch (err) {
-                    console.error(
+                    logger.error(
                         'Redis Cache Error (Intercept):', err);
                 }
 
@@ -79,7 +81,7 @@ export const cacheMiddleware = (durationSeconds: number = 60) => {
 
             next();
         } catch (err) {
-            console.error('Redis Cache Error (GET):', err);
+            logger.error('Redis Cache Error (GET):', err);
             next();  // Proceed even if cache fails
         }
     };

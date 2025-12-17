@@ -3,6 +3,7 @@ import {FindManyOptions, Repository} from 'typeorm';
 import {AppDataSource} from '../config/data-source';
 import {NGO} from '../entities/NGO';
 import {User, UserRole} from '../entities/User';
+import logger from '../utils/logger';
 
 /**
  * Repository for NGO operations.
@@ -20,7 +21,9 @@ export class NGORepository
     async createAndSave(data: Partial<NGO>): Promise<NGO>
     {
         const ngo = this.repository.create(data);
-        return this.save(ngo);
+        const saved = await this.save(ngo);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -31,7 +34,9 @@ export class NGORepository
     public async findAll(options?: FindManyOptions<NGO>):
         Promise<NGO[]>
     {
-        return this.repository.find(options);
+        const found = await this.repository.find(options);
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -41,10 +46,12 @@ export class NGORepository
      */
     public async findByUUID(uuid: string): Promise<NGO|null>
     {
-        return this.repository.findOne({
+        const found = await this.repository.findOne({
             where: {uuid},
             relations: ['manager', 'employees', 'products'],
         });
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -75,7 +82,9 @@ export class NGORepository
      */
     public async save(ngo: NGO): Promise<NGO>
     {
-        return this.repository.save(ngo);
+        const saved = await this.repository.save(ngo);
+        logger.table(saved);
+        return saved;
     }
 
     /**

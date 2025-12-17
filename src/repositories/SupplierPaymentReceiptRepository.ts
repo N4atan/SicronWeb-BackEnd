@@ -3,6 +3,7 @@ import {FindManyOptions} from 'typeorm';
 import {AppDataSource} from '../config/data-source';
 import {Supplier} from '../entities/Supplier';
 import {SupplierPaymentReceipt} from '../entities/SupplierPaymentReceipt';
+import logger from '../utils/logger';
 
 /**
  * Repository for Supplier Payment Receipts.
@@ -22,7 +23,9 @@ export class SupplierPaymentReceiptRepository
         ): Promise<SupplierPaymentReceipt>
     {
         const created = this.repository.create(receipt);
-        return await this.repository.save(created);
+        const saved = await this.repository.save(created);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -34,7 +37,9 @@ export class SupplierPaymentReceiptRepository
         receipt: SupplierPaymentReceipt,
         ): Promise<SupplierPaymentReceipt>
     {
-        return await this.repository.save(receipt);
+        const saved = await this.repository.save(receipt);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -46,7 +51,9 @@ export class SupplierPaymentReceiptRepository
         opt?: FindManyOptions<SupplierPaymentReceipt>,
         ): Promise<SupplierPaymentReceipt[]|null>
     {
-        return await this.repository.find(opt);
+        const found = await this.repository.find(opt);
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -58,10 +65,12 @@ export class SupplierPaymentReceiptRepository
         uuid: string,
         ): Promise<SupplierPaymentReceipt|null>
     {
-        return await this.repository.findOne({
+        const found = await this.repository.findOne({
             where: {uuid},
             relations: ['supplier', 'supplier.manager'],
         });
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -73,10 +82,12 @@ export class SupplierPaymentReceiptRepository
         supplier: Supplier,
         ): Promise<SupplierPaymentReceipt[]>
     {
-        return await this.repository.find({
+        const list = await this.repository.find({
             where: {supplier},
             order: {paymentDate: 'DESC'},
         });
+        logger.table(list);
+        return list;
     }
 
     /**

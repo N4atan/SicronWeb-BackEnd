@@ -4,6 +4,7 @@ import {AppDataSource} from '../config/data-source';
 import {NGO} from '../entities/NGO';
 import {NGOProduct} from '../entities/NGOProduct';
 import {Product} from '../entities/Product';
+import logger from '../utils/logger';
 
 /**
  * Repository for NGO Product (Needs) operations.
@@ -21,7 +22,9 @@ export class NGOProductRepository
         Promise<NGOProduct>
     {
         const created = this.repository.create(ngoProduct);
-        return await this.repository.save(created);
+        const saved = await this.repository.save(created);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -31,7 +34,9 @@ export class NGOProductRepository
      */
     public async save(product: NGOProduct): Promise<NGOProduct>
     {
-        return await this.repository.save(product);
+        const saved = await this.repository.save(product);
+        logger.table(saved);
+        return saved;
     }
 
     /**
@@ -43,7 +48,9 @@ export class NGOProductRepository
         opt?: FindManyOptions<NGOProduct>,
         ): Promise<NGOProduct[]|null>
     {
-        return await this.repository.find(opt);
+        const found = await this.repository.find(opt);
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -55,10 +62,12 @@ export class NGOProductRepository
     public async find(ngo: NGO, product: Product):
         Promise<NGOProduct|null>
     {
-        return await this.repository.findOne({
+        const found = await this.repository.findOne({
             where: {ngo, product},
             relations: ['ngo', 'product'],
         });
+        logger.table(found);
+        return found;
     }
 
     /**
@@ -68,10 +77,12 @@ export class NGOProductRepository
      */
     public async listByNGO(ngo: NGO): Promise<NGOProduct[]>
     {
-        return await this.repository.find({
+        const list = await this.repository.find({
             where: {ngo},
             relations: ['product'],
         });
+        logger.table(list);
+        return list;
     }
 
     /**

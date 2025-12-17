@@ -39,7 +39,7 @@ export class SupplierPaymentReceiptController
                 {message: 'Fornecedor não encontrado'});
 
         if (req.user!.role !== UserRole.ADMIN &&
-            (!req.ngo || req.user.uuid !== req.ngo.manager.uuid))
+            req.user.uuid !== supplier.manager.uuid)
             return res.status(403).json(
                 {message: 'Permissão negada'});
 
@@ -97,7 +97,7 @@ export class SupplierPaymentReceiptController
                 [req.supplier] :
                 await this.supplierRepository.findByUserUUID(
                     req.user!.uuid);
-            if (!suppliers)
+            if (!suppliers || suppliers.length === 0)
                 return res.status(404).json(
                     {message: 'Fornecedor não encontrado'});
 

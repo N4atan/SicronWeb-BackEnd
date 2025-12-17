@@ -2,6 +2,7 @@
 import {createClient} from 'redis';
 
 import InMemoriaRedis from '../utils/InMemoriaRedis';
+import logger from '../utils/logger';
 
 let clientInstance: any = null;
 let currentMode: 'redis'|'in-memory'|null = null;
@@ -28,7 +29,7 @@ export async function getRedisClient(mode?: 'redis'|'in-memory')
 
     if (clientInstance && currentMode !== requested) {
         // warn only when actually changing mode
-        console.warn(`Redis mode changed from "${currentMode}" to "${
+        logger.warn(`Redis mode changed from "${currentMode}" to "${
             requested}"`);
         try {
             if (typeof clientInstance.quit === 'function') {
@@ -53,7 +54,7 @@ export async function getRedisClient(mode?: 'redis'|'in-memory')
     const client = createClient({url: redisUrl});
 
     client.on('error', (err: any) => {
-        console.error('Redis client error:', err);
+        logger.error('Redis client error:', err);
     });
 
     await client.connect();
