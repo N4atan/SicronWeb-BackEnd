@@ -1,17 +1,19 @@
-import { Router } from 'express';
+import {Router} from 'express';
 
-
-import UserRoutes from './UserRoutes';
-import NGORoutes from './NGORoutes';
-import SupplierRoutes from './SupplierRoutes';
-import ProductRoutes from './ProductRoutes';
-import SupplierProductRoutes from './SupplierProductRoutes';
 import NGOProductRoutes from './NGOProductRoutes';
-import UserDonationRoutes from './UserDonationRoutes';
+import NGORoutes from './NGORoutes';
+import ProductRoutes from './ProductRoutes';
 import SupplierPaymentRoutes from './SupplierPaymentRoutes';
+import SupplierProductRoutes from './SupplierProductRoutes';
+import SupplierRoutes from './SupplierRoutes';
+import UserDonationRoutes from './UserDonationRoutes';
+import UserRoutes from './UserRoutes';
 
 const router: Router = Router();
 
+/**
+ * Main Router linking all sub-routers.
+ */
 router.use('/users', UserRoutes);
 router.use('/ngos', NGORoutes);
 router.use('/suppliers', SupplierRoutes);

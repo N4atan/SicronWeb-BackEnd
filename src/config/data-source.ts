@@ -1,28 +1,39 @@
-import "reflect-metadata";
-import { DataSource } from "typeorm";
-import * as dotenv from "dotenv";
+import 'reflect-metadata';
 
-dotenv.config();
+import {DataSource} from 'typeorm';
 
-import { User } from "../entities/User";
-import { NGO  } from "../entities/NGO";
-import { Supplier } from "../entities/Supplier";
-import { SupplierPaymentReceipt } from "../entities/SupplierPaymentReceipt";
-import { NGOProduct } from "../entities/NGOProduct";
-import { SupplierProduct } from "../entities/SupplierProduct";
-import { Product } from "../entities/Product";
-import { UserDonationReceipt } from "../entities/UserDonationReceipt";
+import {NGO} from '../entities/NGO';
+import {NGOProduct} from '../entities/NGOProduct';
+import {Product} from '../entities/Product';
+import {Supplier} from '../entities/Supplier';
+import {SupplierPaymentReceipt} from '../entities/SupplierPaymentReceipt';
+import {SupplierProduct} from '../entities/SupplierProduct';
+import {User} from '../entities/User';
+import {UserDonationReceipt} from '../entities/UserDonationReceipt';
 
-const { DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME } = process.env;
+import {ENV} from './env';
 
+/**
+ * TypeORM DataSource configuration.
+ * Connects to the MySQL database using environment variables.
+ */
 export const AppDataSource = new DataSource({
-    type: "mysql",
-    host: DB_HOST,
-    port: Number(DB_PORT || "3306"),
-    username: DB_USERNAME,
-    password: DB_PASSWORD,
-    database: DB_NAME,
-    synchronize: true,
-    logging: true,
-    entities: [User, NGO, Supplier, SupplierPaymentReceipt, SupplierProduct, Product, NGOProduct, UserDonationReceipt]
+    type: 'mysql',
+    host: ENV.DB_HOST,
+    port: ENV.DB_PORT,
+    username: ENV.DB_USERNAME,
+    password: ENV.DB_PASSWORD,
+    database: ENV.DB_NAME,
+    synchronize: false,
+    logging: false,
+    entities: [
+        User,
+        NGO,
+        Supplier,
+        SupplierPaymentReceipt,
+        SupplierProduct,
+        Product,
+        NGOProduct,
+        UserDonationReceipt,
+    ],
 });

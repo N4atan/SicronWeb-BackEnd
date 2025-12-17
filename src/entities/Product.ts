@@ -1,24 +1,34 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, PrimaryColumn } from 'typeorm';
+import {Column, Entity, Generated, OneToMany, PrimaryGeneratedColumn,} from 'typeorm';
 
-import { SupplierProduct } from './SupplierProduct';
-import { NGOProduct      } from './NGOProduct';
+import {NGOProduct} from './NGOProduct';
+import {SupplierProduct} from './SupplierProduct';
 
-@Entity('products')
-export class Product {
-  @PrimaryColumn()
-  public name!: string;
+/**
+ * Entity representing a generic Product definition in the system
+ * (e.g., "Rice 5kg"). Actual offers and needs link to this entity.
+ */
+@Entity('products') export class Product
+{
+    @PrimaryGeneratedColumn() public id!: number;
 
-  @Column({ nullable: true })
-  public description!: string;
+    @Column({unique: true, length: 36})
+    @Generated('uuid')
+    public uuid!: string;
 
-  @Column({ nullable: true})
-  public category!: string;
+    @Column({unique: true}) public name!: string;
 
-  @OneToMany(() => SupplierProduct, sp => sp.product)
-  public supplierProducts!: SupplierProduct[];
+    @Column({nullable: true}) public description!: string;
 
-  @OneToMany(() => NGOProduct, np => np.product)
-  public ngoProducts!: NGOProduct[];
+    @Column({nullable: true}) public category!: string;
 
-  public constructor(partial?: Partial<Product>) { Object.assign(this, partial) }
+    @OneToMany(() => SupplierProduct, (sp) => sp.product)
+    public supplierProducts!: SupplierProduct[];
+
+    @OneToMany(() => NGOProduct, (np) => np.product)
+    public ngoProducts!: NGOProduct[];
+
+    public constructor(partial?: Partial<Product>)
+    {
+        Object.assign(this, partial);
+    }
 }

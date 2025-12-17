@@ -1,59 +1,105 @@
-import { FindManyOptions } from "typeorm";
+import {FindManyOptions} from 'typeorm';
 
-import { AppDataSource } from '../config/data-source';
+import {AppDataSource} from '../config/data-source';
+import {NGO} from '../entities/NGO';
+import {User} from '../entities/User';
+import {UserDonationReceipt} from '../entities/UserDonationReceipt';
 
-import { UserDonationReceipt } from '../entities/UserDonationReceipt';
-import { User                } from '../entities/User';
-import { NGO                 } from '../entities/NGO';
+/**
+ * Repository for User Donation Receipts.
+ */
+export class UserDonationReceiptRepository
+{
+    private repository =
+        AppDataSource.getRepository(UserDonationReceipt);
 
-export class UserDonationReceiptRepository {
-  private repository = AppDataSource.getRepository(UserDonationReceipt);
+    /**
+     * Creates and saves a receipt.
+     * @param receipt - Receipt entity.
+     * @returns Promise<UserDonationReceipt>
+     */
+    public async createAndSave(
+        receipt: UserDonationReceipt,
+        ): Promise<UserDonationReceipt>
+    {
+        const created = this.repository.create(receipt);
+        return await this.repository.save(created);
+    }
 
-  public async createAndSave(receipt: UserDonationReceipt): Promise<UserDonationReceipt>
-  {
-    const created = this.repository.create(receipt);
-    return await this.repository.save(created);
-  }
+    /**
+     * Saves a receipt.
+     * @param receipt - Receipt entity.
+     * @returns Promise<UserDonationReceipt>
+     */
+    public async save(
+        receipt: UserDonationReceipt,
+        ): Promise<UserDonationReceipt>
+    {
+        return await this.repository.save(receipt);
+    }
 
-  public async save(receipt: UserDonationReceipt): Promise<UserDonationReceipt>
-  {
-    return await this.repository.save(receipt);
-  }
-  
-  public async findAll(opt?: FindManyOptions<UserDonationReceipt>): Promise<UserDonationReceipt[] | null>
-  {
-    return await this.repository.find(opt);
-  }
+    /**
+     * Finds receipts matching options.
+     * @param opt - Find options.
+     * @returns Promise<UserDonationReceipt[] | null>
+     */
+    public async findAll(
+        opt?: FindManyOptions<UserDonationReceipt>,
+        ): Promise<UserDonationReceipt[]|null>
+    {
+        return await this.repository.find(opt);
+    }
 
-  public async findByUUID(uuid: string): Promise<UserDonationReceipt | null>
-  {
-    return await this.repository.findOne({
-      where: { uuid },
-      relations: ['user', 'ngo']
-    });
-  }
+    /**
+     * Finds receipt by UUID.
+     * @param uuid - Receipt UUID.
+     * @returns Promise<UserDonationReceipt | null>
+     */
+    public async findByUUID(uuid: string):
+        Promise<UserDonationReceipt|null>
+    {
+        return await this.repository.findOne({
+            where: {uuid},
+            relations: ['user', 'ngo', 'ngo.manager'],
+        });
+    }
 
-  public async listByUser(user: User): Promise<UserDonationReceipt[]>
-  {
-    return await this.repository.find({
-      where: { user },
-      relations: ['ngo'],
-      order: { donationDate: 'DESC' }
-    });
-  }
+    /**
+     * Lists receipts by User.
+     * @param user - The User.
+     * @returns Promise<UserDonationReceipt[]>
+     */
+    public async listByUser(user: User):
+        Promise<UserDonationReceipt[]>
+    {
+        return await this.repository.find({
+            where: {user},
+            relations: ['ngo'],
+            order: {donationDate: 'DESC'},
+        });
+    }
 
-  public async listByNGO(ngo: NGO): Promise<UserDonationReceipt[]>
-  {
-    return await this.repository.find({
-      where: { ngo },
-      relations: ['user'],
-      order: { donationDate: 'DESC' }
-    });
-  }
+    /**
+     * Lists receipts by NGO.
+     * @param ngo - The NGO.
+     * @returns Promise<UserDonationReceipt[]>
+     */
+    public async listByNGO(ngo: NGO): Promise<UserDonationReceipt[]>
+    {
+        return await this.repository.find({
+            where: {ngo},
+            relations: ['user'],
+            order: {donationDate: 'DESC'},
+        });
+    }
 
-  public async remove(uuid: string): Promise<void>
-  {
-    const receipt = await this.findByUUID(uuid);
-    if (receipt) await this.repository.remove(receipt);
-  }
+    /**
+     * Removes a receipt.
+     * @param receipt - Receipt entity to remove.
+     * @returns Promise<void>
+     */
+    public async remove(receipt: UserDonationReceipt): Promise<void>
+    {
+        await this.repository.remove(receipt);
+    }
 }

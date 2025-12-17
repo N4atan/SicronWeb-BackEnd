@@ -1,153 +1,204 @@
-import { Request, Response } from "express";
+import {Request, Response} from 'express';
 
-import { User, UserRole } from "../entities/User";
+import {COOKIE_NAMES} from '../config/cookies';
+import {User, UserRole} from '../entities/User';
+import {UserRepository} from '../repositories/UserRepository';
+import {CryptService} from '../services/CryptService';
+import {RefreshService} from '../services/RefreshService';
+import {TokenService, UserPayload} from '../services/TokenService';
+import {AuthUtil} from '../utils/authUtil';
 
-import { UserRepository } from "../repositories/UserRepository";
-
-import { TokenService } from "../services/TokenService";
-import { RefreshService } from "../services/RefreshService";
-import { CryptService } from "../services/CryptService";
-
-export class UserController {
+/**
+ * Controller for managing User operations and Authentication.
+ */
+export class UserController
+{
     public static userRepo = new UserRepository();
 
-    static async register(req: Request, res: Response): Promise<Response> {
-        const { username, email, password, role } = req.body;
+    /**
+     * Registers a new User.
+     *
+     * @param req - Express Request object containing user details.
+     * @param res - Express Response object.
+     * @returns Promise<Response> - The created User or error.
+     */
+    static async register(req: Request, res: Response):
+        Promise<Response>
+    {
+        const {username, email, password, role} = req.body;
 
-        if ((req.logged || req.user) && req.user?.role !== UserRole.ADMIN)
-            return res.status(403).json({ message: "Permissão negada!" });
+        if ((req.logged || req.user) &&
+            req.user?.role !== UserRole.ADMIN)
+            return res.status(403).json(
+                {message: 'Permissão negada!'});
 
         if (!username || !email || !password)
-            return res.status(400).json({ message: "Os campos necessários não foram fornecidos!" });
+            return res.status(400).json({
+                message: 'Os campos necessários não foram fornecidos!'
+            });
 
         if (await UserController.userRepo.findByEmail(email))
-            return res.status(409).json({ message: "O E-Mail fornecido já possui registro!" });
+            return res.status(409).json(
+                {message: 'O E-Mail fornecido já possui registro!'});
 
-        const userRole = (req.user?.role === UserRole.ADMIN && role) ? role : undefined;
+        const userRole = req.user?.role === UserRole.ADMIN && role ?
+            role :
+            undefined;
 
-        const user = new User({ username, email, password, role: userRole });
+        const user =
+            new User({username, email, password, role: userRole});
 
         await UserController.userRepo.createAndSave(user);
         return res.status(201).location(`/users/${user.uuid}`).send();
     }
 
-    static async isLogged(req: Request, res: Response): Promise<Response> {
-        return (req.logged || req.user) ? res.status(200).send() : res.status(401).send();
+    /**
+     * Checks if the user is currently logged in.
+     *
+     * @param req - Express Request object.
+     * @param res - Express Response object.
+     * @returns Promise<Response> - 200 OK if logged in, 401
+     *     Unauthorized otherwise.
+     */
+    static async isLogged(req: Request, res: Response):
+        Promise<Response>
+    {
+        return req.logged || req.user ? res.status(200).send() :
+                                        res.status(401).send();
     }
 
-    static async login(req: Request, res: Response): Promise<Response> {
-        const { email, password } = req.body;
+    /**
+     * Authenticates a user and sets session cookies.
+     *
+     * @param req - Express Request object containing email and
+     *     password.
+     * @param res - Express Response object.
+     * @returns Promise<Response> - 204 No Content or error.
+     */
+    static async login(req: Request, res: Response): Promise<Response>
+    {
+        const {email, password} = req.body;
         if (!email || !password)
-            return res.status(400).json({ message: "E-Mail ou senha não foram fornecidos!" });
+            return res.status(400).json(
+                {message: 'E-Mail ou senha não foram fornecidos!'});
 
         const user = await UserController.userRepo.findByEmail(email);
 
-        if (!user || !user.id || !(await CryptService.compare(password, user.password))) {
-            console.log(`[DEBUG] Login failed for email: ${email}`);
-            return res.status(404).json({ message: "E-Mail e/ou senha estão incorretos." });
+        if (!user || !user.id ||
+            !(await CryptService.compare(password, user.password))) {
+            return res.status(404).json(
+                {message: 'E-Mail e/ou senha estão incorretos.'});
         }
 
-        const tokens = TokenService.generateTokenPair({
-            id: user.uuid,
-            email: user.email
-        });
-
-        await RefreshService.save(user.uuid, tokens.refreshToken, req.ip || "");
-
-        res.cookie("refreshToken", tokens.refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
-
-        res.cookie("accessToken", tokens.accessToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            maxAge: 60 * 15 * 1000
-        });
+        await AuthUtil.login(res, user, req.ip || '');
 
         return res.status(204).send();
     }
 
-    static async refresh(req: Request, res: Response): Promise<Response> {
+    /**
+     * Refreshes the authentication token.
+     *
+     * @param req - Express Request object containing refresh token
+     *     cookie.
+     * @param res - Express Response object.
+     * @returns Promise<Response> - 204 No Content with new cookies,
+     *     or error.
+     */
+    static async refresh(req: Request, res: Response):
+        Promise<Response>
+    {
         const user = req.user!;
-        const token = req.cookies.refreshToken;
+        const token = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
 
-        const payload: any = TokenService.verifyRefresh(token);
-        if (!(await RefreshService.isValid(payload.id, token, req.ip || "")) || user.uuid !== payload.id || !user.uuid)
-            return res.status(403).json({ message: "Dados inválidos fornecidos ao serviço de autentificação!" });
+        const payload =
+            TokenService.verifyRefresh(token) as UserPayload;
+        if (!(await RefreshService.isValid(
+                payload.id, token, req.ip || '')) ||
+            user.uuid !== payload.id || !user.uuid)
+            return res.status(403).json({
+                message:
+                    'Dados inválidos fornecidos ao serviço de autentificação!',
+            });
 
-        const newTokens = TokenService.generateTokenPair({
-            id: user.uuid,
-            email: user.email
-        });
-
-        await RefreshService.revoke(user.uuid, req.ip || "");
-        await RefreshService.save(user.uuid, newTokens.refreshToken, req.ip || "");
-
-        res.cookie("refreshToken", newTokens.refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            maxAge: 7 * 24 * 60 * 60 * 1000
-        });
-
-        res.cookie("accessToken", newTokens.accessToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: "strict",
-            maxAge: 60 * 15 * 1000
-        });
-
-        return res.status(204).send();
-
-    }
-
-    static async logout(req: Request, res: Response): Promise<Response> {
-        const token = req.cookies.refreshToken;
-
-        if (token) {
-            try {
-                const payload: any = TokenService.verifyRefresh(token);
-                await RefreshService.revoke(payload.id, req.ip || "");
-            } catch { }
-        }
-
-        res.clearCookie("refreshToken", {
-            httpOnly: true,
-            secure: true,
-            sameSite: "strict"
-        });
+        await AuthUtil.refresh(res, user, token, req.ip || '');
 
         return res.status(204).send();
     }
 
-    static async query(req: Request, res: Response): Promise<Response> {
+    /**
+     * Logs out the user by clearing session cookies.
+     *
+     * @param req - Express Request object.
+     * @param res - Express Response object.
+     * @returns Promise<Response> - 204 No Content.
+     */
+    static async logout(req: Request, res: Response):
+        Promise<Response>
+    {
+        const token = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
+
+        await AuthUtil.logout(res, token, req.ip || '');
+
+        return res.status(204).send();
+    }
+
+    /**
+     * Queries Users based on filters.
+     *
+     * @param req - Express Request object containing query filters.
+     * @param res - Express Response object.
+     * @returns Promise<Response> - List of Users matching criteria.
+     */
+    static async query(req: Request, res: Response): Promise<Response>
+    {
         const user = req.user!;
-        const { uuid, email, name } = req.query;
+        const {uuid, email, name} = req.query;
 
-        const filters: any = {};
+        const filters: Record<string, unknown> = {};
 
         if (uuid) filters.uuid = String(uuid);
-        if (email && user?.role !== UserRole.ADMIN) filters.email = String(email);
+
+        // Prevent Email Enumeration: Only admins can search by
+        // E-Mail.
+        if (email && user?.role === UserRole.ADMIN) {
+            filters.email = String(email);
+        }
+
         if (name) filters.name = String(name);
 
-        const users = await UserController.userRepo.findAll({ where: filters });
-        console.log(`[DEBUG] UserController.query found ${users.length} users.`);
+        const users =
+            await UserController.userRepo.findAll({where: filters});
+        const safeUsers = users.map((u) => {
+            const userResponse = {...u};
 
-        users.forEach(u => {
-            if (user?.role !== UserRole.ADMIN && user?.id !== u.id) (u as any).email = undefined;
+            if (user?.role !== UserRole.ADMIN && user?.id !== u.id) {
+                delete (userResponse as Partial<User>).email;
+                delete (userResponse as Partial<User>).blockedNGOs;
+                delete (userResponse as Partial<User>)
+                    .blockedSuppliers;
+            }
 
-            (u as any).password = undefined;
-            (u as any).id = undefined;
+            delete (userResponse as Partial<User>).password;
+            delete (userResponse as Record<string, unknown>)
+                .previous_password;
+            delete (userResponse as Partial<User>).id;
+
+            return userResponse;
         });
 
-        return res.status(200).json({ users });
+        return res.status(200).json({users: safeUsers});
     }
 
-    static async delete(req: Request, res: Response): Promise<Response> {
+    /**
+     * Deletes a User.
+     *
+     * @param req - Express Request object.
+     * @param res - Express Response object.
+     * @returns Promise<Response> - 204 No Content.
+     */
+    static async delete(req: Request, res: Response):
+        Promise<Response>
+    {
         const target = req.target!;
 
         await UserController.userRepo.remove(target);
@@ -156,17 +207,36 @@ export class UserController {
         return res.status(204).send();
     }
 
-    static async update(req: Request, res: Response): Promise<Response> {
+    /**
+     * Updates a User's details.
+     *
+     * @param req - Express Request object containing updates.
+     * @param res - Express Response object.
+     * @returns Promise<Response> - 204 No Content or error.
+     */
+    static async update(req: Request, res: Response):
+        Promise<Response>
+    {
         const target = req.target!;
 
-        const { newUsername, newEmail, newPassword, username, email, password, role } = req.body;
+        const {
+            newUsername,
+            newEmail,
+            newPassword,
+            username,
+            email,
+            password,
+            role,
+        } = req.body;
 
         const updatedUsername = newUsername || username;
-        const updatedEmail    = newEmail    || email;
+        const updatedEmail = newEmail || email;
         const updatedPassword = newPassword || password;
 
-        if (updatedEmail && updatedEmail !== target.email && await UserController.userRepo.findByEmail(updatedEmail))
-            return res.status(409).json({ message: "O E-mail fornecido já está em uso!" });
+        if (updatedEmail && updatedEmail !== target.email &&
+            (await UserController.userRepo.findByEmail(updatedEmail)))
+            return res.status(409).json(
+                {message: 'O E-mail fornecido já está em uso!'});
 
         if (updatedUsername) target.username = updatedUsername;
 
@@ -181,7 +251,7 @@ export class UserController {
 
         if (updatedEmail) target.email = updatedEmail;
 
-        const updated = await UserController.userRepo.save(target);
+        await UserController.userRepo.save(target);
 
         return res.status(204).send();
     }

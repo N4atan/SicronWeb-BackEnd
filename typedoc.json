@@ -1,0 +1,22 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "entryPointStrategy": "expand",
+    "entryPoints": [
+        "src"
+    ],
+    "out": "docs/html",
+    "exclude": [
+        "**/*.test.ts",
+        "**/dist/**",
+        "**/node_modules/**"
+    ],
+    "validation": {
+        "invalidLink": true,
+        "notExported": true
+    },
+    "treatWarningsAsErrors": true,
+    "name": "SicronWeb API",
+    "includeVersion": true,
+    "githubPages": false,
+    "readme": "none"
+}

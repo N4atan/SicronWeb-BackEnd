@@ -1,17 +1,30 @@
-import { Request, Response, NextFunction } from 'express'
-import { SupplierProductRepository } from '../repositories/SupplierProductRepository'
+import {NextFunction, Request, Response} from 'express';
 
-const repo = new SupplierProductRepository()
+import {SupplierProductRepository} from '../repositories/SupplierProductRepository';
 
+const repo = new SupplierProductRepository();
+
+/**
+ * Middleware to resolve Supplier Product (Offer).
+ * Requires resolveSupplierAccess (or req.supplier) and resolveProduct
+ * (or req.product) to be populated. Populates req.supplierProduct.
+ */
 export async function resolveSupplierProduct(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  const supplierProduct = await repo.find(req.supplier!, req.product!)
-  if (!supplierProduct)
-    return res.status(404).json({ message: 'Produto de fornecedor não encontrado' })
+    req: Request,
+    res: Response,
+    next: NextFunction,
+)
+{
+    if (!req.supplier || !req.product) {
+        // Should ensure previous middlewares ran.
+    }
 
-  req.supplierProduct = supplierProduct
-  next()
+    const supplierProduct =
+        await repo.find(req.supplier!, req.product!);
+    if (!supplierProduct)
+        return res.status(404).json(
+            {message: 'Produto de fornecedor não encontrado'});
+
+    req.supplierProduct = supplierProduct;
+    next();
 }

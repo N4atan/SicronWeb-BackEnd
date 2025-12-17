@@ -1,8 +1,15 @@
 import Redis from 'ioredis';
 
-const redisClient = new Redis(process.env.REDIS_URL as string);
+import {ENV} from './env';
 
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
+const redisClient = new Redis(ENV.REDIS_URL);
+
+redisClient.on(
+    'error',
+    (err: unknown) => console.error('Redis Client Error', err));
 redisClient.on('connect', () => console.log('Redis Connected!'));
 
+/**
+ * Singleton Redis Client instance.
+ */
 export default redisClient;

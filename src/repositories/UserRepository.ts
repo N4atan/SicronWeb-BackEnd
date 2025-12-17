@@ -1,44 +1,98 @@
-import { FindManyOptions, Repository } from "typeorm";
+import {FindManyOptions, Repository} from 'typeorm';
 
-import { AppDataSource } from "../config/data-source";
+import {AppDataSource} from '../config/data-source';
+import {User} from '../entities/User';
 
-import { User } from '../entities/User'
-
+/**
+ * Repository for User entity operations.
+ */
 export class UserRepository
 {
-    private repository: Repository<User> = AppDataSource.getRepository(User);
+    public repository: Repository<User> =
+        AppDataSource.getRepository(User);
 
-    public async createAndSave( data: Partial<User> ): Promise<User>
+    /**
+     * Creates and saves a new User.
+     * @param data - Partial User data.
+     * @returns Promise<User> - The created user.
+     */
+    public async createAndSave(data: Partial<User>): Promise<User>
     {
         const user = this.repository.create(data);
         return this.repository.save(user);
     }
 
-    public async findAll(options?: FindManyOptions<User>): Promise<User[]>
+    /**
+     * Finds users matching criteria.
+     * @param options - Find options.
+     * @returns Promise<User[]> - List of users.
+     */
+    public async findAll(options?: FindManyOptions<User>):
+        Promise<User[]>
     {
         return this.repository.find(options);
     }
 
-    public async findById(id: number): Promise<User | null>
+    /**
+     * Finds a user by ID.
+     * @param id - User ID.
+     * @returns Promise<User | null>
+     */
+    public async findById(id: number): Promise<User|null>
     {
-        return this.repository.findOneBy({ id });
-    }
-    
-    public async findByUUID(uuid: string): Promise<User | null>
-    {
-        return this.repository.findOneBy({ uuid });
-    }
-
-    public async findByEmail(email: string): Promise<User | null>
-    {
-        return this.repository.findOneBy({ email })
+        return this.repository.findOneBy({id});
     }
 
+    /**
+     * Finds a user by UUID.
+     * @param uuid - User UUID.
+     * @returns Promise<User | null>
+     */
+    /**
+     * Finds a user by UUID, loading essential relations for
+     * permissions. Relations: managedNGO, managedSupplier,
+     * employedNGOs, employedSuppliers.
+     * @param uuid - User UUID.
+     * @returns Promise<User | null>
+     */
+    public async findByUUID(uuid: string): Promise<User|null>
+    {
+        return this.repository.findOne({
+            where: {uuid},
+            relations: [
+                'managedNGO',
+                'managedSupplier',
+                'employedNGOs',
+                'employedSuppliers',
+            ],
+        });
+    }
+
+    /**
+     * Finds a user by Email.
+     * @param email - User Email.
+     * @returns Promise<User | null>
+     */
+    public async findByEmail(email: string): Promise<User|null>
+    {
+        return this.repository.findOneBy({email});
+    }
+
+    /**
+     * Saves a user entity.
+     * @param user - User entity to save.
+     * @returns Promise<User> - The saved user.
+     */
     public async save(user: User): Promise<User>
     {
         return this.repository.save(user);
     }
 
+    /**
+     * Removes a user entity.
+     * @param user - User entity to remove.
+     * @returns Promise<User> - The removed user.
+     */
     public async remove(user: User): Promise<User>
     {
         return this.repository.remove(user);

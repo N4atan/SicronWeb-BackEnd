@@ -1,67 +1,64 @@
-import { Column, Entity, PrimaryGeneratedColumn, Generated, JoinColumn, OneToOne, ManyToOne, ManyToMany } from "typeorm";
+import {Column, Entity, Generated, JoinColumn, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn,} from 'typeorm';
 
-import { User } from './User';
-import { NGOProduct } from './NGOProduct';
+import {ApprovalStatus} from './ApprovalStatus';
+import {NGOProduct} from './NGOProduct';
+import {User} from './User';
 
-import { ApprovalStatus } from './ApprovalStatus';
-
-@Entity('ngotbl')
-export class NGO
+/**
+ * Entity representing a Non-Governmental Organization (NGO).
+ */
+@Entity('ngotbl') export class NGO
 {
-    @PrimaryGeneratedColumn()
-    public id?:number;
+    @PrimaryGeneratedColumn() public id?: number;
 
     @Column({unique: true, length: 36})
     @Generated('uuid')
     public uuid!: string;
 
-    @Column({ unique: true })
-    public name!: string;
-    
-    @Column({ unique: true })
-    public cnpj!: string;
+    @Column({unique: true}) public name!: string;
 
-    @Column({ unique: true})
-    public trade_name!: string;
+    @Column({unique: true}) public cnpj!: string;
 
-    @Column()
-    public area!: string;
-    
-    @Column()
-    public description!: string;
+    @Column({unique: true}) public trade_name!: string;
 
-    @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+    @Column() public area!: string;
+
+    @Column() public description!: string;
+
+    @Column({type: 'decimal', precision: 10, scale: 2, default: 0})
     public wallet!: number;
 
-    @Column({ length: 100 })
-    public local!: string;
+    @Column({length: 100}) public local!: string;
 
-    @Column({ length: 15 })
-    public phone_number!: string;
+    @Column({length: 15}) public phone_number!: string;
 
-    @Column({ length: 100 })
-    public contact_email!: string;
+    @Column({length: 100}) public contact_email!: string;
 
-    @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+    @Column({type: 'datetime', default: () => 'CURRENT_TIMESTAMP'})
     public creation_date!: Date;
 
-    @Column({ type: 'enum', enum: ApprovalStatus, default: ApprovalStatus.PENDING})
+    @Column({
+        type: 'enum',
+        enum: ApprovalStatus,
+        default: ApprovalStatus.PENDING,
+    })
     public status!: ApprovalStatus;
 
-    @OneToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
+    @OneToOne(() => User, {nullable: false, onDelete: 'CASCADE'})
     @JoinColumn({
-      name: 'manager_uuid',
-      referencedColumnName: 'uuid'
+        name: 'manager_uuid',
+        referencedColumnName: 'uuid',
     })
     public manager!: User;
-  
-    @Column()
-    @ManyToMany(() => User, user => user.employedNGOs)
+
+    @ManyToMany(() => User, (user) => user.employedNGOs)
     public employees!: User[];
 
-    @Column()
-    @ManyToOne(() => NGOProduct, { nullable: false })
+    @OneToMany(() => NGOProduct, (ngoProduct) => ngoProduct.ngo)
     public products!: NGOProduct[];
-    
-    public constructor(partial?: Partial<NGO>) { Object.assign(this, partial) }
+
+    public constructor(partial?: Partial<NGO>)
+    {
+        Object.assign(this, partial);
+    }
 }

@@ -1,22 +1,61 @@
-import { Router } from 'express'
+import {Router} from 'express';
 
-import { SupplierController } from '../controllers/SupplierController'
-import { authenticateUser } from '../middlewares/authenticateUser'
-import { resolveSupplierAccess } from '../middlewares/resolveSupplierAccess'
-import { UserRole } from '../entities/User'
+import {SupplierController} from '../controllers/SupplierController';
+import {UserRole} from '../entities/User';
+import {authenticateUser} from '../middlewares/authenticateUser';
+import {cacheMiddleware} from '../middlewares/cacheMiddleware';
+import {resolveSupplierAccess} from '../middlewares/resolveSupplierAccess';
 
-const router: Router = Router()
+const router: Router = Router();
 
-router.get('/', authenticateUser(false), SupplierController.query)
+/**
+ * Routes for Supplier Entity operations.
+ * Base Path: /api/suppliers
+ */
 
-router.post('/', authenticateUser(true), SupplierController.register)
+router.get(
+    '/',
+    authenticateUser(false),
+    cacheMiddleware(60),
+    SupplierController.query,
+);
 
-router.patch('/:uuid', authenticateUser(true, [UserRole.ADMIN, UserRole.SUPPLIER_MANAGER]), resolveSupplierAccess, SupplierController.update)
+router.post('/', authenticateUser(true), SupplierController.register);
 
-router.delete('/:uuid', authenticateUser(true, [UserRole.ADMIN, UserRole.SUPPLIER_MANAGER]), resolveSupplierAccess, SupplierController.delete)
+router.patch(
+    '/:uuid',
+    authenticateUser(
+        true, [UserRole.ADMIN, UserRole.SUPPLIER_MANAGER]),
+    resolveSupplierAccess,
+    SupplierController.update,
+);
 
-router.post('/:uuid/employees', authenticateUser(true, [UserRole.SUPPLIER_MANAGER]), resolveSupplierAccess, SupplierController.addEmployee);
-router.delete('/:uuid/employees', authenticateUser(true, [UserRole.ADMIN, UserRole.SUPPLIER_MANAGER]), resolveSupplierAccess, SupplierController.removeEmployee);
-router.post('/:uuid/block', authenticateUser(true), resolveSupplierAccess, SupplierController.blockEmployment);
+router.delete(
+    '/:uuid',
+    authenticateUser(
+        true, [UserRole.ADMIN, UserRole.SUPPLIER_MANAGER]),
+    resolveSupplierAccess,
+    SupplierController.delete,
+);
 
-export default router
+router.post(
+    '/:uuid/employees',
+    authenticateUser(true, [UserRole.SUPPLIER_MANAGER]),
+    resolveSupplierAccess,
+    SupplierController.addEmployee,
+);
+router.delete(
+    '/:uuid/employees',
+    authenticateUser(
+        true, [UserRole.ADMIN, UserRole.SUPPLIER_MANAGER]),
+    resolveSupplierAccess,
+    SupplierController.removeEmployee,
+);
+router.post(
+    '/:uuid/block',
+    authenticateUser(true),
+    resolveSupplierAccess,
+    SupplierController.blockEmployee,
+);
+
+export default router;

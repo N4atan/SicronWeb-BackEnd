@@ -10,7 +10,7 @@
     "emitDecoratorMetadata": true,
     "skipLibCheck": true,
     "typeRoots": ["./node_modules/@types", "./src/@types"],
-    "noEmitOnError": false //Gambiarra Profissional (by Gemini)
+    "noEmitOnError": false
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]

@@ -1,7 +1,20 @@
-import { Request, Response, NextFunction } from 'express'
+import {NextFunction, Request, Response} from 'express';
 
-export function errorHandler(err: any, req: Request, res: Response, _next: NextFunction)
+import {SQLErrorUtil} from '../utils/sqlErrorUtil';
+
+/**
+ * Global Error Handler Middleware.
+ * Intercepts unhandled errors and SQL errors.
+ */
+export function errorHandler(
+    err: unknown,
+    req: Request,
+    res: Response,
+    _next: NextFunction,
+)
 {
-  console.error(`INTERNAL SERVER ERROR:`, err);
-  res.status(500).json({ message: 'Internal Server Error' });
+    if (SQLErrorUtil.handle(err, res)) return;
+
+    console.error(`INTERNAL SERVER ERROR:`, err);
+    res.status(500).json({message: 'Internal Server Error'});
 }

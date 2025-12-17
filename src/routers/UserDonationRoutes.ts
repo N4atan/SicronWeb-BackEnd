@@ -1,22 +1,31 @@
-import { Router } from 'express'
+import {Router} from 'express';
 
-import { UserDonationReceiptController } from '../controllers/UserDonationReceiptController'
-import { authenticateUser } from '../middlewares/authenticateUser'
-import { resolveUserDonationReceipt } from '../middlewares/resolveUserDonationReceipt'
-import { resolveUserDonationAccess } from '../middlewares/resolveUserDonationAccess'
+import {UserDonationReceiptController} from '../controllers/UserDonationReceiptController';
+import {authenticateUser} from '../middlewares/authenticateUser';
+import {resolveUserDonationAccess} from '../middlewares/resolveUserDonationAccess';
+import {resolveUserDonationReceipt} from '../middlewares/resolveUserDonationReceipt';
 
-const router: Router = Router()
+const router: Router = Router();
 
-router.get('/', authenticateUser(true), UserDonationReceiptController.query)
-
-router.post('/', authenticateUser(true), UserDonationReceiptController.create)
+/**
+ * Routes for User Donation Receipts.
+ * Base Path: /api/donations
+ */
 
 router.get(
-  '/:uuid',
-  authenticateUser(true),
-  resolveUserDonationReceipt,
-  resolveUserDonationAccess,
-  (req, res) => res.status(200).json(req.donationReceipt)
-)
+    '/', authenticateUser(true), UserDonationReceiptController.query);
 
-export default router
+router.post(
+    '/',
+    authenticateUser(true),
+    UserDonationReceiptController.create);
+
+router.get(
+    '/:uuid',
+    authenticateUser(true),
+    resolveUserDonationReceipt,
+    resolveUserDonationAccess,
+    (req, res) => res.status(200).json(req.donationReceipt),
+);
+
+export default router;

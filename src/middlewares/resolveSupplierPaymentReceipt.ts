@@ -1,22 +1,27 @@
-import { Request, Response, NextFunction } from 'express';
+import {NextFunction, Request, Response} from 'express';
 
-import { SupplierPaymentReceiptRepository } from '../repositories/SupplierPaymentReceiptRepository';
+import {SupplierPaymentReceiptRepository} from '../repositories/SupplierPaymentReceiptRepository';
 
 const repo = new SupplierPaymentReceiptRepository();
 
+/**
+ * Middleware to resolve Supplier Payment Receipt.
+ * Populates req.paymentReceipt.
+ */
 export async function resolveSupplierPaymentReceipt(
-  req: Request,
-  res: Response,
-  next: NextFunction
-) {
-  const { uuid } = req.params
-  if (!uuid)
-    return res.status(400).json({ message: 'UUID ausente' })
+    req: Request,
+    res: Response,
+    next: NextFunction,
+)
+{
+    const {uuid} = req.params;
+    if (!uuid) return res.status(400).json({message: 'UUID ausente'});
 
-  const receipt = await repo.findByUUID(uuid)
-  if (!receipt)
-    return res.status(404).json({ message: 'Recibo de pagamento não encontrado' })
+    const receipt = await repo.findByUUID(uuid);
+    if (!receipt)
+        return res.status(404).json(
+            {message: 'Recibo de pagamento não encontrado'});
 
-  req.paymentReceipt = receipt
-  next()
+    req.paymentReceipt = receipt;
+    next();
 }

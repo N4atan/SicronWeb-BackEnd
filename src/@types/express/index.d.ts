@@ -1,20 +1,56 @@
-export {}; // <--- ADICIONA ISTO PARA TORNAR O FICHEIRO UM MÓDULO
+/**
+ * Express module declaration to extend the global Request interface.
+ * Adds custom properties for authenticated users and resolved
+ * entities.
+ */
+export {};
 
-declare global {
+declare global
+{
     namespace Express {
-      interface Request {
-        user?: import("../../entities/User").User | null;
-        target?: import("../../entities/User").User | null;
-        ngo?: import("../../entities/NGO").NGO | null;
-	supplier?: import ("../../entities/Supplier").Supplier | null;
-	product?: import ("../../entities/Product").Product | null;
-	supplierProduct?: import ("../../entities/SupplierProduct").SupplierProduct | null;
-	ngoProduct?: import ("../../entities/NGOProduct").NGOProduct | null;
+        /**
+         * Extended Express Request interface with custom properties.
+         */
+        interface Request
+        {
+            /** Authenticated User entity */
+            user?: import('../../entities/User').User|null;
 
-	paymentReceipt: import ("../entities/SupplierPaymentReceipt").SupplierPaymentReceipt | null;
-	donationReceipt: import ("../entities/UserDonationReceipt").UserDonationReceipt | null;
+            /**
+             * Target User entity for operations affecting another
+             * user
+             */
+            target?: import('../../entities/User').User|null;
 
-        logged?: boolean;
-      }
+            /** Resolved NGO entity */
+            ngo?: import('../../entities/NGO').NGO|null;
+
+            /** Resolved Supplier entity */
+            supplier?:
+                import('../../entities/Supplier').Supplier|null;
+
+            /** Resolved Product entity */
+            product?: import('../../entities/Product').Product|null;
+
+            /** Resolved SupplierProduct entity */
+            supplierProduct?:|import('../../entities/SupplierProduct')
+                .SupplierProduct|null;
+
+            /** Resolved NGOProduct entity */
+            ngoProduct?:
+                import('../../entities/NGOProduct').NGOProduct|null;
+
+            /** Resolved Supplier Payment Receipt */
+            paymentReceipt:|
+                import('../entities/SupplierPaymentReceipt')
+                    .SupplierPaymentReceipt|null;
+
+            /** Resolved User Donation Receipt */
+            donationReceipt:|import('../entities/UserDonationReceipt')
+                .UserDonationReceipt|null;
+
+            /** Flag indicating if the user is logged in */
+            logged?: boolean;
+        }
     }
 }

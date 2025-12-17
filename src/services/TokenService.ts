@@ -1,40 +1,75 @@
-import jwt, { JwtPayload, Secret, SignOptions } from "jsonwebtoken";
+import jwt, {Secret, SignOptions} from 'jsonwebtoken';
 
-import { 
-    JWT_ACCESS_SECRET, 
-    JWT_REFRESH_SECRET, 
-    JWT_ACCESS_EXPIRES, 
-    JWT_REFRESH_EXPIRES 
-} from "../config/jwt";
+import {ENV} from '../config/env';
 
-interface TokenPair
-{
-    accessToken:  string;
+/**
+ * Represents a pair of JWT tokens (access and refresh).
+ */
+export interface TokenPair {
+    accessToken: string;
     refreshToken: string;
 }
 
+export interface UserPayload {
+    id: string;  // User UUID
+    email?: string;
+    [key: string]: unknown;
+}
+
+/**
+ * Service for generating and verifying JWT tokens.
+ */
 export class TokenService
 {
-    static generateTokenPair(payload: any): TokenPair
+    /**
+     * Generates an access and refresh token pair.
+     *
+     * @param payload - User payload (must include id/uuid).
+     * @returns TokenPair - Object containing accessToken and
+     *     refreshToken.
+     */
+    static generateTokenPair(payload: UserPayload): TokenPair
     {
-        const accessToken = jwt.sign(payload, JWT_ACCESS_SECRET! as Secret, {
-            expiresIn: JWT_ACCESS_EXPIRES! as string
-        } as SignOptions);
+        const accessToken = jwt.sign(
+            payload,
+            ENV.JWT_ACCESS_SECRET as Secret,
+            {
+                expiresIn: ENV.JWT_ACCESS_EXPIRES,
+            } as SignOptions,
+        );
 
-        const refreshToken = jwt.sign({ id: payload.id }, JWT_REFRESH_SECRET! as Secret, {
-            expiresIn: JWT_REFRESH_EXPIRES! as string
-        } as SignOptions);
+        const refreshToken = jwt.sign(
+            {id: payload.id},
+            ENV.JWT_REFRESH_SECRET as Secret,
+            {
+                expiresIn: ENV.JWT_REFRESH_EXPIRES,
+            } as SignOptions,
+        );
 
-        return { accessToken, refreshToken };
+        return {accessToken, refreshToken};
     }
 
-    static verifyAccess(token: string): string | JwtPayload
+    /**
+     * Verifies an access token.
+     *
+     * @param token - The JWT access token string.
+     * @returns string | jwt.JwtPayload - Decoded payload or throws
+     *     error.
+     */
+    static verifyAccess(token: string): string|jwt.JwtPayload
     {
-        return jwt.verify(token, JWT_ACCESS_SECRET! as Secret);
+        return jwt.verify(token, ENV.JWT_ACCESS_SECRET as Secret);
     }
 
-    static verifyRefresh(token: string): string | JwtPayload
+    /**
+     * Verifies a refresh token.
+     *
+     * @param token - The JWT refresh token string.
+     * @returns string | jwt.JwtPayload - Decoded payload or throws
+     *     error.
+     */
+    static verifyRefresh(token: string): string|jwt.JwtPayload
     {
-        return jwt.verify(token, JWT_REFRESH_SECRET! as Secret);
+        return jwt.verify(token, ENV.JWT_REFRESH_SECRET as Secret);
     }
 }
