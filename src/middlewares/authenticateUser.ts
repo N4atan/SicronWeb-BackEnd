@@ -26,7 +26,7 @@ export function authenticateUser(
 )
 {
     return async (
-               req: Request, res: Response, next: NextFunction) => {
+        req: Request, res: Response, next: NextFunction) => {
         req.user = null;
         req.logged = false;
 
@@ -79,20 +79,32 @@ export function authenticateUser(
                 return next();
             }
 
-            // If access token came from a cookie, ensure refresh
-            // token is still valid for session binding. If the
-            // client used an Authorization header (mobile/API
-            // clients), allow access based on a valid access token
-            // alone (no refresh token check).
-            if (!accessTokenFromHeader) {
-                if (!RefreshService.isValid(
-                    user.uuid, refreshToken, req.ip)) {
+            // Determine device identifier for refresh-token
+            // binding. Prefer a stable device cookie, then header.
+            const deviceId = (req.cookies?.[COOKIE_NAMES.DEVICE_ID] as string) ||
+                (req.headers['x-device-id'] as string) || undefined;
+
+            // If a refresh token is present (cookie session), validate
+            // it using deviceId. If no refresh token exists and the
+            // access token arrived via Authorization header, allow
+            // access based on the access token alone.
+            if (refreshToken) {
+                const valid = await RefreshService.isValid(user.uuid, refreshToken, deviceId);
+                if (!valid) {
                     if (required) {
                         AuthUtil.clearSession(res);
                         return res.status(401).end();
                     }
                     return next();
                 }
+            } else if (!accessTokenFromHeader) {
+                // No refresh token and access token came from cookie —
+                // treat as unauthenticated for required routes.
+                if (required) {
+                    AuthUtil.clearSession(res);
+                    return res.status(401).end();
+                }
+                return next();
             }
 
             if (roles && !roles.includes(user.role))
