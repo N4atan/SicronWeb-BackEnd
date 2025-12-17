@@ -33,12 +33,17 @@ export class UserController {
 
     static async isLogged(req: Request, res: Response): Promise<Response> {
         if (req.logged || req.user) {
-            const user = req.user as any;
-            /* Garante que a senha não seja enviada */
-            if (user.password) user.password = undefined;
-            if (user.previous_password) user.previous_password = undefined;
+            // Recarrega o usuário com as relações para garantir que temos os dados da ONG/Fornecedor
+            const userWithRelations = await UserController.userRepo.findOne({
+                where: { uuid: req.user!.uuid },
+                relations: ['managedNGO', 'managedSupplier']
+            }) as any;
 
-            return res.status(200).json(user);
+            if (userWithRelations) {
+                if (userWithRelations.password) userWithRelations.password = undefined;
+                if (userWithRelations.previous_password) userWithRelations.previous_password = undefined;
+                return res.status(200).json(userWithRelations);
+            }
         }
         return res.status(401).send();
     }
@@ -139,13 +144,18 @@ export class UserController {
         const filters: any = {};
 
         if (uuid) filters.uuid = String(uuid);
-        if (email && user?.role !== UserRole.ADMIN) filters.email = String(email);
+        // CORREÇÃO: O filtro de email deve ser aplicado para todos, inclusive admins
+        if (email) filters.email = String(email);
         if (name) filters.name = String(name);
 
-        const users = await UserController.userRepo.findAll({ where: filters });
+        const users = await UserController.userRepo.findAll({
+            where: filters,
+            relations: ['managedNGO', 'managedSupplier']
+        });
         console.log(`[DEBUG] UserController.query found ${users.length} users.`);
 
         users.forEach(u => {
+            // Se não for admin e estiver vendo outro usuário, esconde o email
             if (user?.role !== UserRole.ADMIN && user?.id !== u.id) (u as any).email = undefined;
 
             (u as any).password = undefined;
