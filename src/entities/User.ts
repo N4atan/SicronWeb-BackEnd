@@ -21,7 +21,7 @@ export class User
     @Generated('uuid')
     public uuid!: string;
 
-    @Column() public name!: string;
+    @Column() public username!: string;
 
     @Column({unique: true}) public email!: string;
 
