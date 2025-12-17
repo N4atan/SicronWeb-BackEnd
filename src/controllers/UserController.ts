@@ -32,7 +32,15 @@ export class UserController {
     }
 
     static async isLogged(req: Request, res: Response): Promise<Response> {
-        return (req.logged || req.user) ? res.status(200).send() : res.status(401).send();
+        if (req.logged || req.user) {
+            const user = req.user as any;
+            /* Garante que a senha não seja enviada */
+            if (user.password) user.password = undefined;
+            if (user.previous_password) user.previous_password = undefined;
+
+            return res.status(200).json(user);
+        }
+        return res.status(401).send();
     }
 
     static async login(req: Request, res: Response): Promise<Response> {
@@ -162,7 +170,7 @@ export class UserController {
         const { newUsername, newEmail, newPassword, username, email, password, role } = req.body;
 
         const updatedUsername = newUsername || username;
-        const updatedEmail    = newEmail    || email;
+        const updatedEmail = newEmail || email;
         const updatedPassword = newPassword || password;
 
         if (updatedEmail && updatedEmail !== target.email && await UserController.userRepo.findByEmail(updatedEmail))
