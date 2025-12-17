@@ -10,8 +10,6 @@ const port: number = ENV.PORT;
  */
 AppDataSource.initialize()
     .then(() => {
-        console.log('Data source has been initialized!');
-
         const application = new App();
 
         application.app.listen(port, () => {
@@ -19,5 +17,5 @@ AppDataSource.initialize()
         });
     })
     .catch((e) => {
-        console.error('INIT ERROR: ' + e);
+        console.error('An error has occurred during program initialization: ' + e);
     });

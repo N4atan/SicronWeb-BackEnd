@@ -46,21 +46,7 @@ export class App
         this.app.use(
             cors({
                 origin: (origin, callback) => {
-                    const allowed = process.env.ALLOWED_ORIGINS;
-                    if (allowed) {
-                        const list = allowed.split(',').map((s) => s.trim());
-                        if (!origin) return callback(null, false);
-                        return callback(null, list.includes(origin));
-                    }
-
-                    // Non-production: allow all origins but only if
-                    // origin is present; this keeps behaviour similar
-                    // to previous dev config while avoiding sending
-                    // a permissive header to production clients.
-                    if (process.env.NODE_ENV !== 'production')
                         return callback(null, origin || true);
-
-                    return callback(null, false);
                 },
                 credentials: true,
             }),
@@ -80,7 +66,7 @@ export class App
         this.app.use(
             rateLimit({
                 windowMs: 15 * 60 * 1000,
-                max: 100,
+                max: 7000,
                 standardHeaders: true,
                 legacyHeaders: false,
                 message: {

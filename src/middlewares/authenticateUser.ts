@@ -26,7 +26,7 @@ export function authenticateUser(
 )
 {
     return async (
-        req: Request, res: Response, next: NextFunction) => {
+               req: Request, res: Response, next: NextFunction) => {
         req.user = null;
         req.logged = false;
 
@@ -38,11 +38,13 @@ export function authenticateUser(
 
             // Fallback: accept Authorization: Bearer <token>
             const authHeader = req.headers.authorization;
-            const accessTokenFromHeader = authHeader && authHeader.startsWith('Bearer ')
-                ? authHeader.split(' ')[1]
-                : undefined;
+            const accessTokenFromHeader =
+                authHeader && authHeader.startsWith('Bearer ') ?
+                authHeader.split(' ')[1] :
+                undefined;
 
-            const accessToken = accessTokenFromCookie || accessTokenFromHeader;
+            const accessToken =
+                accessTokenFromCookie || accessTokenFromHeader;
 
             if (!accessToken) {
                 if (required) {
@@ -79,17 +81,25 @@ export function authenticateUser(
                 return next();
             }
 
-            // Determine device identifier for refresh-token
-            // binding. Prefer a stable device cookie, then header.
-            const deviceId = (req.cookies?.[COOKIE_NAMES.DEVICE_ID] as string) ||
-                (req.headers['x-device-id'] as string) || undefined;
+            // Determine session identifier for refresh-token binding.
+            // Use cookie only (no header fallback).
+            const sessionId =
+                (req.cookies?.[COOKIE_NAMES.SESSION_ID] as string) ||
+                undefined;
 
-            // If a refresh token is present (cookie session), validate
-            // it using deviceId. If no refresh token exists and the
-            // access token arrived via Authorization header, allow
-            // access based on the access token alone.
+            // If a refresh token is present (cookie session), require
+            // a sessionId and validate it using RefreshService.
             if (refreshToken) {
-                const valid = await RefreshService.isValid(user.uuid, refreshToken, deviceId);
+                if (!sessionId) {
+                    if (required) {
+                        AuthUtil.clearSession(res);
+                        return res.status(401).end();
+                    }
+                    return next();
+                }
+
+                const valid = await RefreshService.isValid(
+                    user.uuid, refreshToken, sessionId);
                 if (!valid) {
                     if (required) {
                         AuthUtil.clearSession(res);
@@ -97,9 +107,10 @@ export function authenticateUser(
                     }
                     return next();
                 }
-            } else if (!accessTokenFromHeader) {
-                // No refresh token and access token came from cookie —
-                // treat as unauthenticated for required routes.
+            }
+            else if (!accessTokenFromHeader) {
+                // No refresh token and access token came from cookie
+                // — treat as unauthenticated for required routes.
                 if (required) {
                     AuthUtil.clearSession(res);
                     return res.status(401).end();

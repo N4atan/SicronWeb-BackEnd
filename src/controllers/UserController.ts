@@ -1,3 +1,4 @@
+import {randomUUID} from 'crypto';
 import {Request, Response} from 'express';
 
 import {COOKIE_NAMES} from '../config/cookies';
@@ -7,6 +8,7 @@ import {CryptService} from '../services/CryptService';
 import {RefreshService} from '../services/RefreshService';
 import {TokenService, UserPayload} from '../services/TokenService';
 import {AuthUtil} from '../utils/authUtil';
+import {setSessionIdSessionCookie} from '../utils/cookieUtils';
 
 /**
  * Controller for managing User operations and Authentication.
@@ -64,14 +66,13 @@ export class UserController
         Promise<Response>
     {
         if (req.logged || req.user) {
-            const userWithRelations = await UserController.userRepo.findOne({
-                where: { uuid: req.user!.uuid },
-                relations: ['managedNGO', 'managedSupplier'],
-            }) as any;
+            const userWithRelations =
+                await UserController.userRepo.findByUUID(
+                    req.user!.uuid) as Partial<User>;
 
             if (userWithRelations) {
-                if (userWithRelations.password) userWithRelations.password = undefined;
-                if (userWithRelations.previous_password) userWithRelations.previous_password = undefined;
+                userWithRelations.password =
+                    userWithRelations.previous_password = undefined;
                 return res.status(200).json(userWithRelations);
             }
         }
@@ -95,20 +96,26 @@ export class UserController
 
         const user = await UserController.userRepo.findByEmail(email);
 
-        if (!user || !user.id || !(await CryptService.compare(password, user.password))) {
-            return res.status(404).json({ message: 'E-Mail e/ou senha estão incorretos.' });
+        if (!user || !user.id ||
+            !(await CryptService.compare(password, user.password))) {
+            return res.status(404).json(
+                {message: 'E-Mail e/ou senha estão incorretos.'});
         }
 
-        // Determine device identifier: prefer explicit cookie,
-        // then header. If none present, generate one and set
-        // it for the client.
-        let deviceId = req.cookies[COOKIE_NAMES.DEVICE_ID] as string | undefined;
-        if (!deviceId) deviceId = (req.headers['x-device-id'] as string) || undefined;
-        if (!deviceId) {
-            deviceId = require('crypto').randomUUID();
+
+        // Determine session identifier: cookie only. If none present,
+        // generate a server-side sessionId (randomUUID) and set it as
+        // a session cookie.
+        let sessionId =
+            req.cookies[COOKIE_NAMES.SESSION_ID] as string |
+            undefined;
+
+        if (!sessionId) {
+            sessionId = randomUUID();
+            setSessionIdSessionCookie(res, sessionId)
         }
 
-        await AuthUtil.login(res, user, deviceId);
+        await AuthUtil.login(res, user, sessionId!);
 
         return res.status(204).send();
     }
@@ -127,18 +134,38 @@ export class UserController
     {
         const user = req.user!;
         const token = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
+        if (!token)
+            return res.status(400).json(
+                {message: 'Refresh token not provided'});
 
         const payload =
             TokenService.verifyRefresh(token) as UserPayload;
-        if (!(await RefreshService.isValid(
-                payload.id, token, req.ip || '')) ||
-            user.uuid !== payload.id || !user.uuid)
+
+
+        const sessionId =
+            (req.cookies[COOKIE_NAMES.SESSION_ID] as string) ||
+            undefined;
+
+        if (!sessionId)
+            return res.status(403).json(
+                {message: 'Session identifier required'});
+
+        if (!payload || user.uuid !== payload.id || !user.uuid) {
             return res.status(403).json({
                 message:
-                    'Dados inválidos fornecidos ao serviço de autentificação!',
+                    'Dados inválidos fornecidos ao serviço de autentificação!'
+            });
+        }
+
+        const valid = await RefreshService.isValid(
+            payload.id, token, sessionId);
+        if (!valid)
+            return res.status(403).json({
+                message:
+                    'Dados inválidos fornecidos ao serviço de autentificação!'
             });
 
-        await AuthUtil.refresh(res, user, token, req.ip || '');
+        await AuthUtil.refresh(res, user, token, sessionId);
 
         return res.status(204).send();
     }
@@ -154,10 +181,11 @@ export class UserController
         Promise<Response>
     {
         const token = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
-        const deviceId = (req.cookies[COOKIE_NAMES.DEVICE_ID] as string) || (req.headers['x-device-id'] as string) || undefined;
+        const sessionId =
+            (req.cookies[COOKIE_NAMES.SESSION_ID] as string) ||
+            undefined;
 
-        await AuthUtil.logout(res, token, deviceId);
-
+        await AuthUtil.logout(res, token, sessionId);
         return res.status(204).send();
     }
 
@@ -171,21 +199,14 @@ export class UserController
     static async query(req: Request, res: Response): Promise<Response>
     {
         const user = req.user!;
-        const token = req.cookies[COOKIE_NAMES.REFRESH_TOKEN];
 
-        const payload = TokenService.verifyRefresh(token) as UserPayload;
-
-        const deviceId = (req.cookies[COOKIE_NAMES.DEVICE_ID] as string) || (req.headers['x-device-id'] as string) || undefined;
-
-        if (!(await RefreshService.isValid(payload.id, token, deviceId)) || user.uuid !== payload.id || !user.uuid)
-            return res.status(403).json({ message: 'Dados inválidos fornecidos ao serviço de autentificação!' });
-
-        await AuthUtil.refresh(res, user, token, deviceId);
-
-        return res.status(204).send();
+        const filters = (req.query || {}) as Record<string, unknown>;
+        const users =
             await UserController.userRepo.findAll({where: filters});
+
         const safeUsers = users.map((u) => {
-            const userResponse = {...u};
+            const userResponse: Partial<User> = {...u} as
+                Partial<User>;
 
             if (user?.role !== UserRole.ADMIN && user?.id !== u.id) {
                 delete (userResponse as Partial<User>).email;
@@ -195,8 +216,7 @@ export class UserController
             }
 
             delete (userResponse as Partial<User>).password;
-            delete (userResponse as Record<string, unknown>)
-                .previous_password;
+            delete (userResponse as Partial<User>).previous_password;
             delete (userResponse as Partial<User>).id;
 
             return userResponse;

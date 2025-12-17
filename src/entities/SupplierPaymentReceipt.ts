@@ -14,10 +14,7 @@ export class SupplierPaymentReceipt
     @Generated('uuid')
     public uuid!: string;
 
-    @ManyToOne(
-        () => Supplier, (supplier) => supplier.paymentReceipts, {
-            onDelete: 'CASCADE',
-        })
+    @ManyToOne(() => Supplier, (supplier) => supplier.paymentReceipts)
     @JoinColumn({name: 'supplier_id'})
     public supplier!: Supplier;
 

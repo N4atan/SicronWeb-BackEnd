@@ -14,11 +14,11 @@ import {User} from './User';
     @Generated('uuid')
     public uuid!: string;
 
-    @ManyToOne(() => User, {onDelete: 'CASCADE'})
+    @ManyToOne(() => User)
     @JoinColumn({name: 'user_id'})
     public user!: User;
 
-    @ManyToOne(() => NGO, {onDelete: 'CASCADE'})
+    @ManyToOne(() => NGO)
     @JoinColumn({name: 'ngo_id'})
     public ngo!: NGO;
 

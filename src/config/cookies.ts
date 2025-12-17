@@ -4,7 +4,7 @@
 export const COOKIE_NAMES = {
     ACCESS_TOKEN: 'accessToken',
     REFRESH_TOKEN: 'refreshToken',
-    DEVICE_ID: 'deviceId',
+    SESSION_ID: 'sessionId',
 };
 
 /**
@@ -20,16 +20,19 @@ export const TOKEN_EXPIRATION = {
  * compatibility with Render, AWS (behind proxies) and mobile
  * clients.
  */
-export function getCookieOptions() {
+export function getCookieOptions()
+{
     const secureEnv = process.env.COOKIE_SECURE;
     const sameSiteEnv = process.env.COOKIE_SAMESITE;
     const domain = process.env.COOKIE_DOMAIN || undefined;
 
-    const secure = typeof secureEnv !== 'undefined'
-        ? secureEnv === 'true'
-        : process.env.NODE_ENV === 'production';
+    const secure = typeof secureEnv !== 'undefined' ?
+        secureEnv === 'true' :
+        process.env.NODE_ENV === 'production';
 
-    const sameSite = (sameSiteEnv as 'lax' | 'strict' | 'none' | undefined) || 'lax';
+    const sameSite =
+        (sameSiteEnv as 'lax' | 'strict' | 'none' | undefined) ||
+        'lax';
 
     return {
         httpOnly: true,
@@ -39,10 +42,14 @@ export function getCookieOptions() {
     } as const;
 }
 
-export const DEVICE_COOKIE_OPTIONS = {
+export const SESSION_COOKIE_OPTIONS = {
     httpOnly: false,
-    secure: process.env.COOKIE_SECURE ? process.env.COOKIE_SECURE === 'true' : process.env.NODE_ENV === 'production',
-    sameSite: (process.env.COOKIE_SAMESITE as 'lax' | 'strict' | 'none' | undefined) || 'lax',
+    secure: process.env.COOKIE_SECURE ?
+        process.env.COOKIE_SECURE === 'true' :
+        process.env.NODE_ENV === 'production',
+    sameSite: (process.env.COOKIE_SAMESITE as 'lax' | 'strict' |
+               'none' | undefined) ||
+        'lax',
     domain: process.env.COOKIE_DOMAIN || undefined,
-    maxAge: 365 * 24 * 60 * 60 * 1000, // 1 year
+    maxAge: 365 * 24 * 60 * 60 * 1000,  // 1 year
 } as const;

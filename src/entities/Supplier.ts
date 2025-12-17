@@ -18,7 +18,7 @@ import {User} from './User';
 
     @Column() public companyName!: string;
 
-    @OneToOne(() => User, {nullable: false, onDelete: 'CASCADE'})
+    @OneToOne(() => User, {nullable: true})
     @JoinColumn({
         name: 'manager_uuid',
         referencedColumnName: 'uuid',
