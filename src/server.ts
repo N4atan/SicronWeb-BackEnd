@@ -17,5 +17,7 @@ AppDataSource.initialize()
         });
     })
     .catch((e) => {
-        console.error('An error has occurred during program initialization: ' + e);
+        console.error(
+            'An error has occurred during program initialization: ' +
+            e);
     });

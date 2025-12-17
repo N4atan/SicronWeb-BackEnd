@@ -71,9 +71,9 @@ export class UserController
                     req.user!.uuid) as Partial<User>;
 
             if (userWithRelations) {
-                userWithRelations.password =
-                    userWithRelations.previous_password = undefined;
-                return res.status(200).json(userWithRelations);
+                const safe = {...userWithRelations} as Partial<User>;
+                delete (safe as any).password;
+                return res.status(200).json(safe);
             }
         }
         return res.status(401).send();
@@ -216,7 +216,6 @@ export class UserController
             }
 
             delete (userResponse as Partial<User>).password;
-            delete (userResponse as Partial<User>).previous_password;
             delete (userResponse as Partial<User>).id;
 
             return userResponse;

@@ -33,20 +33,39 @@ export const cacheMiddleware = (durationSeconds: number = 60) => {
                         res.statusCode < 300) {
                         // Store directly if string, or stringify
                         // object
-                        const dataToStore = typeof body === 'string' ? body : JSON.stringify(body);
+                        const dataToStore = typeof body === 'string' ?
+                            body :
+                            JSON.stringify(body);
                         (async () => {
                             try {
-                                if (typeof (client as any).setex === 'function') {
-                                    await (client as any).setex(key, durationSeconds, dataToStore);
-                                } else if (typeof (client as any).set === 'function') {
+                                if (typeof (client as any).setex ===
+                                    'function') {
+                                    await (client as any)
+                                        .setex(
+                                            key,
+                                            durationSeconds,
+                                            dataToStore);
+                                }
+                                else if (
+                                    typeof (client as any).set ===
+                                    'function') {
                                     try {
-                                        await (client as any).set(key, dataToStore, 'EX', durationSeconds);
+                                        await (client as any)
+                                            .set(
+                                                key,
+                                                dataToStore,
+                                                'EX',
+                                                durationSeconds);
                                     } catch (_) {
-                                        await (client as any).set(key, dataToStore, { EX: durationSeconds });
+                                        await (client as any)
+                                            .set(key, dataToStore, {
+                                                EX: durationSeconds
+                                            });
                                     }
                                 }
                             } catch (err) {
-                                console.error('Redis Cache Error (SET):', err);
+                                console.error(
+                                    'Redis Cache Error (SET):', err);
                             }
                         })();
                     }

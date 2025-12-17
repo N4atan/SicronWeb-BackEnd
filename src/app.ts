@@ -46,7 +46,7 @@ export class App
         this.app.use(
             cors({
                 origin: (origin, callback) => {
-                        return callback(null, origin || true);
+                    return callback(null, origin || true);
                 },
                 credentials: true,
             }),

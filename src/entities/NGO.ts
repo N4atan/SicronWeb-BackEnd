@@ -44,7 +44,7 @@ import {User} from './User';
     })
     public status!: ApprovalStatus;
 
-    @OneToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
+    @OneToOne(() => User, {nullable: false, onDelete: 'CASCADE'})
     @JoinColumn({
         name: 'manager_uuid',
         referencedColumnName: 'uuid',

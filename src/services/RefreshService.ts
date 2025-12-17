@@ -66,8 +66,11 @@ export class RefreshService
         }
 
         // Revoke all device tokens for this user by scanning keys.
-        // The in-memory client provides a `scanStream` compatibility helper.
-        const stream = (client as any).scanStream({match: `refresh_token:${uuid}:*`});
+        // The in-memory client provides a `scanStream` compatibility
+        // helper.
+        const stream = (client as any).scanStream({
+            match: `refresh_token:${uuid}:*`
+        });
         const keysToDelete: string[] = [];
 
         return new Promise((resolve, reject) => {

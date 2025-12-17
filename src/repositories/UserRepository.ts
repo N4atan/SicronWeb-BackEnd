@@ -1,9 +1,10 @@
 import {FindManyOptions, Repository} from 'typeorm';
 
 import {AppDataSource} from '../config/data-source';
-import {User} from '../entities/User';
 import {NGO} from '../entities/NGO';
 import {Supplier} from '../entities/Supplier';
+import {User} from '../entities/User';
+
 import {NGORepository} from './NGORepository';
 import {SupplierRepository} from './SupplierRepository';
 
@@ -102,46 +103,53 @@ export class UserRepository
         const ngoRepo = new NGORepository();
         const supplierRepo = new SupplierRepository();
 
-        const managedNGOs = await AppDataSource.getRepository(NGO)
-            .createQueryBuilder('ngo')
-            .leftJoinAndSelect('ngo.manager', 'manager')
-            .where('manager.uuid = :uuid', {uuid: user.uuid})
-            .getMany();
+        const managedNGOs =
+            await AppDataSource.getRepository(NGO)
+                .createQueryBuilder('ngo')
+                .leftJoinAndSelect('ngo.manager', 'manager')
+                .where('manager.uuid = :uuid', {uuid: user.uuid})
+                .getMany();
 
         for (const ngo of managedNGOs) {
             await ngoRepo.remove(ngo as any);
         }
 
-        const managedSuppliers = await AppDataSource.getRepository(Supplier)
-            .createQueryBuilder('supplier')
-            .leftJoinAndSelect('supplier.manager', 'manager')
-            .where('manager.uuid = :uuid', {uuid: user.uuid})
-            .getMany();
+        const managedSuppliers =
+            await AppDataSource.getRepository(Supplier)
+                .createQueryBuilder('supplier')
+                .leftJoinAndSelect('supplier.manager', 'manager')
+                .where('manager.uuid = :uuid', {uuid: user.uuid})
+                .getMany();
 
         for (const s of managedSuppliers) {
             await supplierRepo.remove(s as any);
         }
 
-        const ngosWhereEmployee = await AppDataSource.getRepository(NGO)
-            .createQueryBuilder('ngo')
-            .leftJoinAndSelect('ngo.employees', 'employee')
-            .where('employee.uuid = :uuid', {uuid: user.uuid})
-            .getMany();
+        const ngosWhereEmployee =
+            await AppDataSource.getRepository(NGO)
+                .createQueryBuilder('ngo')
+                .leftJoinAndSelect('ngo.employees', 'employee')
+                .where('employee.uuid = :uuid', {uuid: user.uuid})
+                .getMany();
 
         for (const ngo of ngosWhereEmployee) {
-            ngo.employees = ngo.employees.filter(e => e.uuid !== user.uuid);
+            ngo.employees =
+                ngo.employees.filter(e => e.uuid !== user.uuid);
             await AppDataSource.getRepository(NGO).save(ngo);
         }
 
-        const suppliersWhereEmployee = await AppDataSource.getRepository(Supplier)
-            .createQueryBuilder('supplier')
-            .leftJoinAndSelect('supplier.employees', 'employee')
-            .where('employee.uuid = :uuid', {uuid: user.uuid})
-            .getMany();
+        const suppliersWhereEmployee =
+            await AppDataSource.getRepository(Supplier)
+                .createQueryBuilder('supplier')
+                .leftJoinAndSelect('supplier.employees', 'employee')
+                .where('employee.uuid = :uuid', {uuid: user.uuid})
+                .getMany();
 
         for (const supplier of suppliersWhereEmployee) {
-            supplier.employees = supplier.employees.filter(e => e.uuid !== user.uuid);
-            await AppDataSource.getRepository(Supplier).save(supplier);
+            supplier.employees =
+                supplier.employees.filter(e => e.uuid !== user.uuid);
+            await AppDataSource.getRepository(Supplier).save(
+                supplier);
         }
 
         return this.repository.remove(user);
