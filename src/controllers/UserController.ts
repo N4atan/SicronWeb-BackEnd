@@ -63,8 +63,19 @@ export class UserController
     static async isLogged(req: Request, res: Response):
         Promise<Response>
     {
-        return req.logged || req.user ? res.status(200).send() :
-                                        res.status(401).send();
+        if (req.logged || req.user) {
+            const userWithRelations = await UserController.userRepo.findOne({
+                where: { uuid: req.user!.uuid },
+                relations: ['managedNGO', 'managedSupplier'],
+            }) as any;
+
+            if (userWithRelations) {
+                if (userWithRelations.password) userWithRelations.password = undefined;
+                if (userWithRelations.previous_password) userWithRelations.previous_password = undefined;
+                return res.status(200).json(userWithRelations);
+            }
+        }
+        return res.status(401).send();
     }
 
     /**

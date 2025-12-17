@@ -34,4 +34,7 @@ export const ENV = {
     REDIS_URL: getEnv('REDIS_URL'),
     BCRYPT_SALT_HASHES:
         parseInt(getEnv('BCRYPT_SALT_HASHES', '10'), 10),
+    // Optional: comma-separated allowed origins for CORS (e.g.
+    // https://example.com,https://app.example.com)
+    ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || undefined,
 };

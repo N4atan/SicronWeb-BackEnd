@@ -15,10 +15,25 @@ export const TOKEN_EXPIRATION = {
 };
 
 /**
- * Standard cookie options for security.
+ * Build cookie options dynamically based on environment for
+ * compatibility with Render, AWS (behind proxies) and mobile
+ * clients.
  */
-export const COOKIE_OPTIONS = {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict' as const,
-};
+export function getCookieOptions() {
+    const secureEnv = process.env.COOKIE_SECURE;
+    const sameSiteEnv = process.env.COOKIE_SAMESITE;
+    const domain = process.env.COOKIE_DOMAIN || undefined;
+
+    const secure = typeof secureEnv !== 'undefined'
+        ? secureEnv === 'true'
+        : process.env.NODE_ENV === 'production';
+
+    const sameSite = (sameSiteEnv as 'lax' | 'strict' | 'none' | undefined) || 'lax';
+
+    return {
+        httpOnly: true,
+        secure,
+        sameSite,
+        domain,
+    } as const;
+}

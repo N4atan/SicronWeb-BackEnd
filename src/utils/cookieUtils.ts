@@ -1,6 +1,6 @@
 import {Response} from 'express';
 
-import {COOKIE_NAMES, COOKIE_OPTIONS, TOKEN_EXPIRATION,} from '../config/cookies';
+import {COOKIE_NAMES, getCookieOptions, TOKEN_EXPIRATION,} from '../config/cookies';
 
 /**
  * Sets authentication cookies (Refresh and Access tokens).
@@ -13,13 +13,15 @@ export const setAuthCookies = (
     accessToken: string,
     refreshToken: string,
     ) => {
+    const options = getCookieOptions();
+
     res.cookie(COOKIE_NAMES.REFRESH_TOKEN, refreshToken, {
-        ...COOKIE_OPTIONS,
+        ...options,
         maxAge: TOKEN_EXPIRATION.REFRESH_TOKEN,
     });
 
     res.cookie(COOKIE_NAMES.ACCESS_TOKEN, accessToken, {
-        ...COOKIE_OPTIONS,
+        ...options,
         maxAge: TOKEN_EXPIRATION.ACCESS_TOKEN,
     });
 };
@@ -29,6 +31,7 @@ export const setAuthCookies = (
  * @param res - Express Response.
  */
 export const clearAuthCookies = (res: Response) => {
-    res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, COOKIE_OPTIONS);
-    res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, COOKIE_OPTIONS);
+    const options = getCookieOptions();
+    res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, options);
+    res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, options);
 };
