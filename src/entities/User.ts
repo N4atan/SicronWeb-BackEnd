@@ -1,7 +1,8 @@
-import {Column, Entity, Generated, JoinColumn, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn,} from 'typeorm';
+import {Column, Entity, Generated, JoinColumn, ManyToMany, AfterLoad, OneToOne, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate,} from 'typeorm';
 
 import {NGO} from './NGO';
 import {Supplier} from './Supplier';
+import {CryptService} from '../services/CryptService';       
 
 export enum UserRole {
     USER = 'USER',
@@ -34,6 +35,7 @@ export class User
     @JoinColumn({name: 'managed_ngo_uuid', referencedColumnName: 'uuid'})
     public managedNGO?: NGO;
 
+
     @OneToOne(() => Supplier, (s) => s.manager)
     @JoinColumn({name: 'managed_supplier_uuid', referencedColumnName: 'uuid'})
     public managedSupplier?: Supplier;
@@ -50,6 +52,8 @@ export class User
     @Column({type: 'simple-array', nullable: true})
     public blockedSuppliers?: string[];
 
+    private previous_password?: string;
+
     @Column({type: 'datetime', default: () => 'CURRENT_TIMESTAMP'})
     public creation_date!: Date;
 
@@ -57,4 +61,22 @@ export class User
     {
         Object.assign(this, partial);
     }
+
+    @BeforeInsert()
+    @BeforeUpdate()
+    async beforeInsert(): Promise<void>
+    {
+        // On insert, store the initial password as previous_password
+        if (this.previous_password !== this.password) {
+            this.password = await CryptService.hash(this.password);
+            this.previous_password = this.password;
+        }
+    }
+
+    @AfterLoad()
+    afterLoad(): void
+    {
+         this.previous_password = this.password;
+    }
+    
 }
