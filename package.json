@@ -4,10 +4,10 @@
   "description": "API backend com TypeScript e Express",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc || true",
+    "build": "tsc",
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
-    "reset-db": "ts-node src/scripts/reset-db.ts",
+    "reset-db": "ts-node-dev src/scripts/reset-db.ts",
     "check-db": "ts-node src/scripts/check-db.ts",
     "check-db:local": "ts-node src/scripts/local-check-db.ts",
     "lint": "eslint .",
