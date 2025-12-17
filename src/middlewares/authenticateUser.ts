@@ -31,10 +31,18 @@ export function authenticateUser(
         req.logged = false;
 
         try {
-            const accessToken =
+            const accessTokenFromCookie =
                 req.cookies?.[COOKIE_NAMES.ACCESS_TOKEN];
             const refreshToken =
                 req.cookies?.[COOKIE_NAMES.REFRESH_TOKEN];
+
+            // Fallback: accept Authorization: Bearer <token>
+            const authHeader = req.headers.authorization;
+            const accessTokenFromHeader = authHeader && authHeader.startsWith('Bearer ')
+                ? authHeader.split(' ')[1]
+                : undefined;
+
+            const accessToken = accessTokenFromCookie || accessTokenFromHeader;
 
             if (!accessToken) {
                 if (required) {
@@ -71,13 +79,20 @@ export function authenticateUser(
                 return next();
             }
 
-            if (!RefreshService.isValid(
+            // If access token came from a cookie, ensure refresh
+            // token is still valid for session binding. If the
+            // client used an Authorization header (mobile/API
+            // clients), allow access based on a valid access token
+            // alone (no refresh token check).
+            if (!accessTokenFromHeader) {
+                if (!RefreshService.isValid(
                     user.uuid, refreshToken, req.ip)) {
-                if (required) {
-                    AuthUtil.clearSession(res);
-                    return res.status(401).end();
+                    if (required) {
+                        AuthUtil.clearSession(res);
+                        return res.status(401).end();
+                    }
+                    return next();
                 }
-                return next();
             }
 
             if (roles && !roles.includes(user.role))
