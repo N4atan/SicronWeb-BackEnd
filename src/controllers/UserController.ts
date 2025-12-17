@@ -144,8 +144,25 @@ export class UserController {
         const filters: any = {};
 
         if (uuid) filters.uuid = String(uuid);
-        // CORREÇÃO: O filtro de email deve ser aplicado para todos, inclusive admins
-        if (email) filters.email = String(email);
+
+        // CORREÇÃO: Email apenas para ADMIN. Outros buscam por Username.
+        if (email) {
+            if (user.role === UserRole.ADMIN) {
+                filters.email = String(email);
+            } else {
+                // Se não for admin, IGNORA a busca por email para segurança
+                // Ou poderíamos retornar erro, mas ignorar é mais seguro para não vazar existência?
+                // O usuario pediu "apenas admin consegue por email", então outros não conseguem.
+                // Vou ignorar o filtro de email silenciosamente ou avisar?
+                // Para API, geralmente ignorar filtro não permitido é OK ou retornar 403.
+                // Mas a rota é Query. Se ele filtrar por email e não for admin, resulta em busca sem filtro (perigoso se retornar todos).
+                // MELHOR: Se tentou filtrar por email e não é admin, retorna erro ou vazio?
+                // O código abaixo vai continuar buscado os outros filtros (uuid, name).
+                // Se só passou email, vai virar um getAll?
+                // Vou bloquear se tentar usar email sem ser admin.
+                return res.status(403).json({ message: "Busca por email permitida apenas para administradores." });
+            }
+        }
         if (name) filters.name = String(name);
 
         const users = await UserController.userRepo.findAll({

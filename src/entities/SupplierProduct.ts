@@ -9,7 +9,7 @@ export class SupplierProduct {
   @PrimaryGeneratedColumn()
   public id!: number;
 
-  @ManyToOne(() => Supplier, supplier => supplier.products, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Supplier, supplier => supplier.products)
   @JoinColumn({ name: 'supplier_id' })
   public supplier!: Supplier;
 

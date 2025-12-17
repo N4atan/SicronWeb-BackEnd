@@ -168,7 +168,16 @@ export class SupplierController {
   }
 
   static async delete(req: Request, res: Response): Promise<Response> {
-    await SupplierController.supplierRepository.remove(req.supplier!.uuid)
+    const supplier = req.supplier
+    const manager = supplier?.manager
+
+    await SupplierController.supplierRepository.remove(supplier!.uuid)
+
+    if (manager) {
+      manager.role = UserRole.USER
+      await SupplierController.userRepository.save(manager)
+    }
+
     return res.status(204).send()
   }
 }

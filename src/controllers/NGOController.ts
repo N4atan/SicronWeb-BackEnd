@@ -170,7 +170,16 @@ export class NGOController {
     )
       return res.status(403).json({ message: 'Forbidden' })
 
+    const manager = ngo.manager
+
     await NGOController.ngoRepository.remove(ngo)
+
+    // Reverte o papel do usuário para USER
+    if (manager) {
+      manager.role = UserRole.USER
+      await NGOController.userRepository.save(manager)
+    }
+
     return res.status(204).send()
   }
 }

@@ -47,7 +47,7 @@ export class NGO {
   @Column({ type: 'enum', enum: ApprovalStatus, default: ApprovalStatus.PENDING })
   public status!: ApprovalStatus;
 
-  @OneToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
+  @OneToOne(() => User, { nullable: false })
   @JoinColumn({
     name: 'manager_uuid',
     referencedColumnName: 'uuid'

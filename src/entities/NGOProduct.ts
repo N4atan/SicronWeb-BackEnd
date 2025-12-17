@@ -1,29 +1,32 @@
 import { Entity, Unique, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 
-import { NGO     } from './NGO';
+import { NGO } from './NGO';
 import { Product } from './Product';
 
 @Entity('ngo_products')
 @Unique(['ngo', 'product'])
 export class NGOProduct {
-    @PrimaryGeneratedColumn()
-    id!: number;
+  @PrimaryGeneratedColumn()
+  id!: number;
 
-    @ManyToOne(() => NGO, ngo => ngo.products, { onDelete: 'CASCADE' })
-    ngo!: NGO;
+  @ManyToOne(() => NGO, ngo => ngo.products)
+  ngo!: NGO;
 
-    @ManyToOne(() => Product)
-    @JoinColumn({
-      name: 'ngo_needed_products_uuid',
-      referencedColumnName: 'uuid'
-    })
-    product!: Product;
+  @ManyToOne(() => Product)
+  @JoinColumn({
+    name: 'ngo_needed_products_uuid',
+    referencedColumnName: 'uuid'
+  })
+  product!: Product;
 
-    @Column('int')
-    quantity!: number;
+  @Column('int')
+  quantity!: number;
 
-    @Column({ nullable: true })
-    notes?: string;
+  @Column('int', { default: 0 })
+  public collected_quantity!: number;
 
-    public constructor(partial: Partial<NGOProduct>) { Object.assign(this, partial); }
+  @Column({ nullable: true })
+  notes?: string;
+
+  public constructor(partial: Partial<NGOProduct>) { Object.assign(this, partial); }
 }
