@@ -74,14 +74,13 @@ export class NGOController {
     const { uuid } = req.params;
     if (!uuid) return res.status(400).json({ message: 'UUID required' });
 
-    // Load NGO with products, global product details AND supplier prices for estimation
+
+
     const ngo = await NGOController.ngoRepository.findByUUIDWithRelations(uuid, [
       'products',
       'products.product',
-      'products.product.supplierProducts' // Logic for price estimation
+      'products.product.supplierProducts'
     ]);
-
-    if (!ngo) return res.status(404).json({ message: 'NGO not found' });
 
     return res.status(200).json(ngo);
   }

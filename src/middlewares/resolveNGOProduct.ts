@@ -13,9 +13,7 @@ export async function resolveNGOProduct(
   const id = Number(param);
 
   if (isNaN(id)) {
-    // Fallback: Tentativa de resolução antiga se não for numérico? 
-    // Não, vamos forçar ID numérico pois NGOProduct só tem ID.
-    return res.status(400).json({ message: 'ID inválido para produto da ONG' });
+
   }
 
   const ngoProduct = await repo.findById(id)

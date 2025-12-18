@@ -56,7 +56,7 @@ export class NGOProductController {
     }
 
     static async delete(req: Request, res: Response): Promise<Response> {
-        // req.ngoProduct is populated by middleware
+
         await NGOProductController.ngoProductRepository.removeById(req.ngoProduct!.id)
         return res.status(204).end()
     }

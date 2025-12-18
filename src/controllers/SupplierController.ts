@@ -71,7 +71,7 @@ export class SupplierController {
 
     const list = await SupplierController.supplierRepository.findAll({
       where: filters,
-      relations: ['manager'] // Ensure we can filter by manager
+      relations: ['manager']
     })
     return res.status(200).json({ suppliers: list })
   }
@@ -80,8 +80,7 @@ export class SupplierController {
     const { uuid } = req.params;
     if (!uuid) return res.status(400).json({ message: 'UUID required' });
 
-    // Load Supplier with products, global product details, manager, employees
-    // Removed paymentReceipts to avoid 500 error blocking the dashboard
+
     const supplier = await SupplierController.supplierRepository.findByUUIDWithRelations(uuid, [
       'products',
       'products.product',

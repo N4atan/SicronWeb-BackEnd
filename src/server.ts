@@ -17,7 +17,7 @@ app.set('trust proxy', 1);
 app.use(cookieParser());
 app.use(express.json());
 
-// DEBUG LOGGER
+
 app.use((req, res, next) => {
 	console.log(`[REQUEST] ${req.method} ${req.path}`);
 	next();

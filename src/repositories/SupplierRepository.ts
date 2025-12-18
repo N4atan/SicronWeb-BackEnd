@@ -28,7 +28,7 @@ export class SupplierRepository {
   public async findByUserUUID(uuid: string): Promise<Supplier[] | null> {
     return await this.repository
       .createQueryBuilder('supplier')
-      .leftJoinAndSelect('supplier.manager', 'manager') // Correção: owner -> manager
+      .leftJoinAndSelect('supplier.manager', 'manager')
       .leftJoinAndSelect('supplier.employees', 'employee')
       .where('manager.uuid = :uuid', { uuid })
       .orWhere('employee.uuid = :uuid', { uuid })
@@ -37,7 +37,6 @@ export class SupplierRepository {
 
   public async findByUUID(uuid: string): Promise<Supplier | null> {
     return await this.repository.findOne({
-      where: { uuid },
       where: { uuid },
       relations: ['manager'] // CRITICAL FIX: Removed 'employees' to solve 500 tablePath error. Only manager is needed.
     })

@@ -14,9 +14,7 @@ export class RefreshService {
     }
 
     static isValid(uuid: string, token: string, ip: string | undefined): boolean {
-        // IP validation removed to support mobile networks and cloud load balancers
-        // if (!ip) return false;
-        // return RefreshStore.some(r => r.uuid === uuid && r.token === token && r.ip === ip);
+
         return RefreshStore.some(r => r.uuid === uuid && r.token === token);
     }
 

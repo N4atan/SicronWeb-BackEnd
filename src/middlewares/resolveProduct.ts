@@ -13,9 +13,7 @@ export async function resolveProduct(
   if (!uuid)
     return res.status(400).json({ message: 'UUID ausente' })
 
-  // Repo needs findByUUID or use direct repository access if possible, but let's stick to repo pattern
-  // Adding findByUUID to repo in next step, or using casting if findByUUID exists (it doesnt yet)
-  // Let's assume we will add findByUUID to repo.
+
   const product = await repo.findByUUID(uuid);
 
   if (!product)
