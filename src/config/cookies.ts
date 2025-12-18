@@ -43,7 +43,7 @@ export function getCookieOptions()
 }
 
 export const SESSION_COOKIE_OPTIONS = {
-    httpOnly: false,
+    httpOnly: true,
     secure: process.env.COOKIE_SECURE ?
         process.env.COOKIE_SECURE === 'true' :
         process.env.NODE_ENV === 'production',
