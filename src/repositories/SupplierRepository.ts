@@ -70,12 +70,13 @@ export class SupplierRepository
     public async findByUserUUID(uuid: string):
         Promise<Supplier[]|null>
     {
-        const list = await this.repository.createQueryBuilder('supplier')
-            .leftJoinAndSelect('supplier.manager', 'manager')
-            .leftJoinAndSelect('supplier.employees', 'employee')
-            .where('manager.uuid = :uuid', {uuid})
-            .orWhere('employee.uuid = :uuid', {uuid})
-            .getMany();
+        const list =
+            await this.repository.createQueryBuilder('supplier')
+                .leftJoinAndSelect('supplier.manager', 'manager')
+                .leftJoinAndSelect('supplier.employees', 'employee')
+                .where('manager.uuid = :uuid', {uuid})
+                .orWhere('employee.uuid = :uuid', {uuid})
+                .getMany();
         logger.table(list);
         return list;
     }

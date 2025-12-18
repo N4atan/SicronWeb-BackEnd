@@ -2,6 +2,7 @@ import {NextFunction, Request, Response} from 'express';
 
 import {User, UserRole} from '../entities/User';
 import {UserRepository} from '../repositories/UserRepository';
+import logger from '../utils/logger';
 
 const userRepo = new UserRepository();
 
@@ -29,15 +30,23 @@ export async function authorizeSelfOrAdmin(
     }
 
     if (!target) {
+        logger.warn(
+            'authorizeSelfOrAdmin - target not found', {paramId});
         return res.status(404).json(
             {message: 'O usuário alvo não foi encontrado!'});
     }
 
     if (!req.logged ||
         (user.role !== UserRole.ADMIN && user.uuid !== target.uuid)) {
+        logger.warn(
+            'authorizeSelfOrAdmin - permission denied',
+            {user: user?.uuid, target: target?.uuid});
         return res.status(403).json({message: 'Permissão negada!'});
     }
 
     req.target = target;
+    logger.debug(
+        'authorizeSelfOrAdmin - authorized',
+        {user: user.uuid, target: target.uuid});
     next();
 }

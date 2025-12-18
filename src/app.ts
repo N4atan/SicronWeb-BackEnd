@@ -7,6 +7,7 @@ import helmet from 'helmet';
 
 import {errorHandler} from './middlewares/errorHandler';
 import IndexRouter from './routers/index';
+import logger from './utils/logger';
 
 /**
  * Main Application Class
@@ -39,7 +40,7 @@ export class App
         this.app.use(cookieParser());
         this.app.use(express.json());
         this.app.use(compression());
-        
+
         // Configure CORS: prefer explicit allowlist via
         // ALLOWED_ORIGINS; fall back to permissive in
         // non-production for developer convenience.
@@ -75,6 +76,12 @@ export class App
                 },
             }),
         );
+
+        this.app.use((_req, _res, next) => {
+            logger.warn(
+                '------------------ New request -----------\n\n');
+            next();
+        })
     }
 
     /**

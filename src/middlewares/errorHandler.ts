@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response} from 'express';
 
-import {SQLErrorUtil} from '../utils/sqlErrorUtil';
 import logger from '../utils/logger';
+import {SQLErrorUtil} from '../utils/sqlErrorUtil';
 
 /**
  * Global Error Handler Middleware.

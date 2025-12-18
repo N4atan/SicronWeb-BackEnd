@@ -60,8 +60,7 @@ async function verify()
         logger.info(`Loaded ${meta.length} entities.`);
 
         if (meta.length === 0) {
-            logger.error(
-                'Zero entities loaded! Check entity paths.');
+            logger.error('Zero entities loaded! Check entity paths.');
             process.exit(1);
         }
 

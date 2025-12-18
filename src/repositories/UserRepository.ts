@@ -67,16 +67,14 @@ export class UserRepository
      */
     public async findByUUID(uuid: string): Promise<User|null>
     {
-        const found = await this.repository.findOne({
-            where: {uuid},
-            relations: [
-                'managedNGO',
-                'managedSupplier',
-                'employedNGOs',
-                'employedSuppliers',
-            ],
-        });
-        logger.table(found);
+        logger.debug(
+            'UserRepository.findByUUID - searching for user ',
+            {uuid});
+        const found = await this.repository.findOneBy({uuid})
+
+        logger.debug('UserRepository.findByUUID - Query ended.');
+
+        if (found) logger.table(found);
         return found;
     }
 
@@ -122,7 +120,7 @@ export class UserRepository
                 .getMany();
 
         for (const ngo of managedNGOs) {
-            await ngoRepo.remove(ngo as any);
+            await ngoRepo.remove(ngo);
         }
 
         const managedSuppliers =
@@ -133,7 +131,7 @@ export class UserRepository
                 .getMany();
 
         for (const s of managedSuppliers) {
-            await supplierRepo.remove(s as any);
+            await supplierRepo.remove(s.uuid);
         }
 
         const ngosWhereEmployee =

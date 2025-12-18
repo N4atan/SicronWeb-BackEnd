@@ -1,6 +1,5 @@
 import * as dotenv from 'dotenv';
 import {DataSource} from 'typeorm';
-import logger from '../utils/logger';
 
 import {NGO} from '../entities/NGO';
 import {NGOProduct} from '../entities/NGOProduct';
@@ -10,6 +9,7 @@ import {SupplierPaymentReceipt} from '../entities/SupplierPaymentReceipt';
 import {SupplierProduct} from '../entities/SupplierProduct';
 import {User} from '../entities/User';
 import {UserDonationReceipt} from '../entities/UserDonationReceipt';
+import logger from '../utils/logger';
 
 dotenv.config();
 
@@ -67,7 +67,8 @@ async function resetDatabase()
             'usertbl'
         ];
 
-        logger.info(`Dropando ${tables.length} tabelas conhecidas...`);
+        logger.info(
+            `Dropando ${tables.length} tabelas conhecidas...`);
 
         for (const tableName of tables) {
             logger.info(`Dropando tabela: ${tableName}`);

@@ -14,7 +14,8 @@ const getEnv = (key: string, defaultValue?: string): string => {
     if (raw === undefined) {
         throw new Error(`Environment variable ${key} is missing`);
     }
-    // Trim to avoid issues from trailing newlines or invisible whitespace
+    // Trim to avoid issues from trailing newlines or invisible
+    // whitespace
     const value = String(raw).trim();
     return value;
 };

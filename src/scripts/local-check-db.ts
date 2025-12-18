@@ -58,14 +58,16 @@ async function verify()
         logger.info(`Loaded ${meta.length} entities.`);
 
         if (meta.length === 0) {
-            logger.error(
-                'Zero entities loaded! Check entity paths.');
+            logger.error('Zero entities loaded! Check entity paths.');
             process.exit(1);
         }
 
-        meta.forEach((m) => logger.info(` - Verified Entity: ${m.name} -> Table: ${m.tableName}`));
+        meta.forEach(
+            (m) => logger.info(` - Verified Entity: ${
+                m.name} -> Table: ${m.tableName}`));
 
-        logger.info('Verification Successful (Metadata & Connection Valid)!');
+        logger.info(
+            'Verification Successful (Metadata & Connection Valid)!');
         process.exit(0);
     } catch (error) {
         logger.error('Metadata Verification Failed: ', error);

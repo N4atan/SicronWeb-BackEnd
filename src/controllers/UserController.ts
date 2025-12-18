@@ -4,12 +4,13 @@ import {Request, Response} from 'express';
 import {COOKIE_NAMES} from '../config/cookies';
 import {User, UserRole} from '../entities/User';
 import {UserRepository} from '../repositories/UserRepository';
+import {AuthService} from '../services/AuthService';
 import {CryptService} from '../services/CryptService';
 import {RefreshService} from '../services/RefreshService';
 import {TokenService, UserPayload} from '../services/TokenService';
-import {AuthUtil} from '../utils/authUtil';
+import {AuthUtil} from '../utils/AuthUtil';
 import {setSessionIdSessionCookie} from '../utils/cookieUtils';
-import logger from '../utils/logger'; 
+import logger from '../utils/logger';
 
 /**
  * Controller for managing User operations and Authentication.
@@ -71,16 +72,19 @@ export class UserController
                 await UserController.userRepo.findByUUID(
                     req.user!.uuid) as Partial<User>;
 
-	    logger.debug('Logged');
+            logger.debug(
+                'UserController.isLogged - user present',
+                {uuid: req.user!.uuid});
             if (userWithRelations) {
                 const safe = {...userWithRelations} as Partial<User>;
-                delete (safe as any).password;
-		logger.table(safe);
+                const safeObj = safe as Record<string, unknown>;
+                delete safeObj.password;
+                logger.table(safe);
                 return res.status(200).json(safe);
             }
         }
 
-	logger.debug('Not logged');
+        logger.debug('UserController.isLogged - not logged');
         return res.status(401).send();
     }
 
@@ -95,7 +99,7 @@ export class UserController
     static async login(req: Request, res: Response): Promise<Response>
     {
         const {email, password} = req.body;
-	if (req.logged) return res.status(400).send();
+        if (req.logged) return res.status(400).send();
 
         if (!email || !password)
             return res.status(400).json(
@@ -105,6 +109,9 @@ export class UserController
 
         if (!user || !user.id ||
             !(await CryptService.compare(password, user.password))) {
+            logger.warn(
+                'UserController.login - invalid credentials',
+                {email});
             return res.status(404).json(
                 {message: 'E-Mail e/ou senha estão incorretos.'});
         }
@@ -119,10 +126,14 @@ export class UserController
 
         if (!sessionId) {
             sessionId = randomUUID();
-            setSessionIdSessionCookie(res, sessionId)
+            setSessionIdSessionCookie(res, sessionId);
         }
 
         await AuthUtil.login(res, user, sessionId!);
+
+        logger.info(
+            'UserController.login - success',
+            {uuid: user.uuid, email: user.email});
 
         return res.status(204).send();
     }
@@ -172,7 +183,9 @@ export class UserController
             });
 
         await AuthUtil.refresh(res, user, token, sessionId);
-	return this.isLogged(req, res);
+        logger.info(
+            'UserController.refresh - success', {uuid: user.uuid});
+        return this.isLogged(req, res);
     }
 
     /**
@@ -191,6 +204,7 @@ export class UserController
             undefined;
 
         await AuthUtil.logout(res, token, sessionId);
+        logger.info('UserController.logout - success', {sessionId});
         return res.status(204).send();
     }
 

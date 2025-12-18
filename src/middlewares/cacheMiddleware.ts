@@ -3,6 +3,15 @@ import {NextFunction, Request, Response} from 'express';
 import getRedisClient from '../config/redis';
 import logger from '../utils/logger';
 
+type CacheClient = {
+    get?: (key: string) => Promise<string|null>;
+    set?: (...args: unknown[]) => Promise<unknown>;
+    setex?: (key: string, ttl: number, value: string) =>
+             Promise<unknown>;
+    del?: (...keys: string[]) => Promise<unknown>;
+    scanStream?: (opts: {match?: string}) => NodeJS.ReadableStream;
+};
+
 /**
  * Higher-order middleware function to cache GET responses in Redis.
  * @param durationSeconds - Time to live in seconds (default 60).
@@ -17,7 +26,8 @@ export const cacheMiddleware = (durationSeconds: number = 60) => {
         const key = `cache:${req.originalUrl || req.url}`;
 
         try {
-            const client = await getRedisClient(); // Outer scope client
+            const client =
+                await getRedisClient();  // Outer scope client
             const cachedData = await client.get(key);
             if (cachedData) {
                 res.setHeader('Content-Type', 'application/json');
@@ -39,30 +49,30 @@ export const cacheMiddleware = (durationSeconds: number = 60) => {
                             JSON.stringify(body);
                         (async () => {
                             try {
-                                const cachedClient = await getRedisClient();
-                                if (typeof (cachedClient as any).setex ===
+                                const cachedClient =
+                                    await getRedisClient() as
+                                    unknown as CacheClient;
+                                if (typeof cachedClient.setex ===
                                     'function') {
-                                    await (cachedClient as any)
-                                        .setex(
-                                            key,
-                                            durationSeconds,
-                                            dataToStore);
+                                    await cachedClient.setex!
+                                        (key,
+                                         durationSeconds,
+                                         dataToStore);
                                 }
                                 else if (
-                                    typeof (cachedClient as any).set ===
+                                    typeof cachedClient.set ===
                                     'function') {
                                     try {
-                                        await (cachedClient as any)
-                                            .set(
-                                                key,
-                                                dataToStore,
-                                                'EX',
-                                                durationSeconds);
-                                    } catch (_) {
-                                        await (cachedClient as any)
-                                            .set(key, dataToStore, {
-                                                EX: durationSeconds
-                                            });
+                                        await cachedClient.set!
+                                            (key,
+                                             dataToStore,
+                                             'EX',
+                                             durationSeconds);
+                                    } catch (e) {
+                                        await cachedClient.set!
+                                            (key,
+                                             dataToStore,
+                                             {EX: durationSeconds});
                                     }
                                 }
                             } catch (err) {

@@ -86,6 +86,106 @@ export class EmploymentService
     }
 
     /**
+     * Deletes an NGO and removes all references to it from users
+     * (employed lists and blocked lists). This is a bulk cleanup
+     * utility used when an NGO is removed from the system.
+     *
+     * @param userRepo - Repository for `User`.
+     * @param ngoRepo - Repository for `NGO`.
+     * @param ngo - NGO entity to delete.
+     */
+    static async deleteNGOAndCleanup(
+        userRepo: Repository<User>,
+        ngoRepo: Repository<NGO>,
+        ngo: NGO,
+        ): Promise<{status: number; message?: string}>
+    {
+        if (!ngo || !ngo.uuid)
+            return {status: 400, message: 'NGO inválida'};
+
+        // Load all users with employedNGOs relation so we can mutate
+        // lists.
+        const users =
+            await userRepo.find({relations: ['employedNGOs']});
+
+        for (const u of users) {
+            let changed = false;
+
+            // Remove employment reference
+            if (u.employedNGOs &&
+                u.employedNGOs.some(e => e.uuid === ngo.uuid)) {
+                u.employedNGOs =
+                    u.employedNGOs.filter(e => e.uuid !== ngo.uuid);
+                changed = true;
+            }
+
+            // Remove from blockedNGOs (simple-array of uuids)
+            if (u.blockedNGOs && u.blockedNGOs.includes(ngo.uuid)) {
+                u.blockedNGOs =
+                    u.blockedNGOs.filter(id => id !== ngo.uuid);
+                changed = true;
+            }
+
+            // Reset role if no more NGO employments
+            if (changed &&
+                (!u.employedNGOs || u.employedNGOs.length === 0)) {
+                if (u.role === UserRole.NGO_EMPLOYER)
+                    u.role = UserRole.USER;
+            }
+
+            if (changed) await userRepo.save(u);
+        }
+
+        // Finally remove the NGO entity
+        await ngoRepo.remove(ngo as any);
+
+        return {status: 204};
+    }
+
+    /**
+     * Removes references to an NGO from all users without deleting
+     * the NGO itself. Useful for bulk cleanup operations.
+     */
+    static async bulkRemoveNGOReferences(
+        userRepo: Repository<User>,
+        ngoUuid: string,
+        ): Promise<{status: number; message?: string}>
+    {
+        if (!ngoUuid)
+            return {status: 400, message: 'ngo_uuid obrigatório'};
+
+        const users =
+            await userRepo.find({relations: ['employedNGOs']});
+
+        for (const u of users) {
+            let changed = false;
+
+            if (u.employedNGOs &&
+                u.employedNGOs.some(e => e.uuid === ngoUuid)) {
+                u.employedNGOs =
+                    u.employedNGOs.filter(e => e.uuid !== ngoUuid);
+                changed = true;
+            }
+
+            if (u.blockedNGOs && u.blockedNGOs.includes(ngoUuid)) {
+                u.blockedNGOs =
+                    u.blockedNGOs.filter(id => id !== ngoUuid);
+                changed = true;
+            }
+
+            if (changed &&
+                (!u.employedNGOs || u.employedNGOs.length === 0)) {
+                if (u.role === UserRole.NGO_EMPLOYER)
+                    u.role = UserRole.USER;
+            }
+
+            if (changed) await userRepo.save(u);
+        }
+
+        return {status: 204};
+    }
+
+    /**
      * Removes an employee from an organization.
      *
      * @param userRepo - UserRepository instance.

@@ -1,8 +1,9 @@
-import {Column, Entity, Generated, JoinColumn, ManyToMany, AfterLoad, OneToOne, PrimaryGeneratedColumn, BeforeInsert, BeforeUpdate,} from 'typeorm';
+import {AfterLoad, BeforeInsert, BeforeUpdate, Column, Entity, Generated, JoinColumn, ManyToMany, OneToOne, PrimaryGeneratedColumn,} from 'typeorm';
+
+import {CryptService} from '../services/CryptService';
 
 import {NGO} from './NGO';
 import {Supplier} from './Supplier';
-import {CryptService} from '../services/CryptService';       
 
 export enum UserRole {
     USER = 'USER',
@@ -13,8 +14,7 @@ export enum UserRole {
     SUPPLIER_EMPLOYER = 'SUPPLIER_EMPLOYER',
 }
 
-@Entity('usertbl')
-export class User
+@Entity('usertbl') export class User
 {
     @PrimaryGeneratedColumn() public id?: number;
 
@@ -32,12 +32,13 @@ export class User
     public role!: UserRole;
 
     @OneToOne(() => NGO, (ngo) => ngo.manager)
-    @JoinColumn({name: 'managed_ngo_uuid', referencedColumnName: 'uuid'})
+    @JoinColumn(
+        {name: 'managed_ngo_uuid', referencedColumnName: 'uuid'})
     public managedNGO?: NGO;
 
-
     @OneToOne(() => Supplier, (s) => s.manager)
-    @JoinColumn({name: 'managed_supplier_uuid', referencedColumnName: 'uuid'})
+    @JoinColumn(
+        {name: 'managed_supplier_uuid', referencedColumnName: 'uuid'})
     public managedSupplier?: Supplier;
 
     @ManyToMany(() => NGO, (ngo) => ngo.employees)
@@ -73,10 +74,8 @@ export class User
         }
     }
 
-    @AfterLoad()
-    afterLoad(): void
+    @AfterLoad() afterLoad(): void
     {
-         this.previous_password = this.password;
+        this.previous_password = this.password;
     }
-    
 }
