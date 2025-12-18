@@ -14,7 +14,7 @@ export async function getRedisClient(mode?: 'redis'|'in-memory')
         (process.env.REDIS_URL ? 'redis' : 'in-memory');
 
     if (currentMode === 'redis')
-        return clientInstance;
+        return clientInstance as Redis;
 
     if (clientInstance && currentMode === requested) {
         return clientInstance;
