@@ -5,16 +5,15 @@
     "parser": {
       "syntax": "typescript",
       "tsx": true,
-      "topLevelAwait": true,
-      "importMeta": true,
+      "decoratorsBeforeExport": true,
       "decorators": true
     },
     "transform": {
       "legacyDecorator": true,
       "decoratorMetadata": true
     },
-    "keepClassNames": false,
-    "loose": false 
+    "keepClassNames": true,
+    "loose": false
   },
   "module": {
     "type": "commonjs",
