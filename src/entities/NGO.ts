@@ -55,7 +55,7 @@ import type {User} from './User';
     @ManyToMany(() => async () => (await import('./User')).User, (user: User) => user.employedNGOs)
     public employees!: User[];
 
-    @OneToMany('NGOProduct', 'ngo')
+    @OneToMany(() => async () => (await import('./NGOProduct')).NGOProduct, (prod: NGOProduct) => prod.ngo)
     public products!: NGOProduct[];
 
     public constructor(partial?: Partial<NGO>)
