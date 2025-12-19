@@ -1,62 +1,55 @@
 import Redis from 'ioredis';
+
 import InMemoriaRedis from '../utils/InMemoriaRedis';
 import logger from '../utils/logger';
 
-let clientInstance: Redis | InMemoriaRedis | null = null;
-let currentMode: 'redis' | 'in-memory' | null = null;
-
-export async function getRedisClient(mode?: 'redis' | 'in-memory') {
-    const envMode = process.env.REDIS_MODE as 'redis' | 'in-memory' | undefined;
-    const requested: 'redis' | 'in-memory' =
-        mode || envMode || (process.env.REDIS_URL ? 'redis' : 'in-memory');
-
-    if (clientInstance && currentMode === requested) return clientInstance;
-
-    if (clientInstance && currentMode !== requested) {
-        logger.warn(`Redis mode changed from "${currentMode}" to "${requested}"`);
-        try {
-            if ('quit' in clientInstance && typeof clientInstance.quit === 'function')
-                await clientInstance.quit();
-        } catch (err) {
-            logger.error('Error closing previous Redis client:', err);
-        }
-        clientInstance = null;
-        currentMode = null;
-    }
-
-    if (requested === 'in-memory') {
-        clientInstance = new InMemoriaRedis();
-        await clientInstance.connect();
-        currentMode = 'in-memory';
-        return clientInstance;
-    }
-
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
-    const redisClient = new Redis(redisUrl, {
-        maxRetriesPerRequest: null,
-        retryStrategy: (times) => Math.min(times * 100, 2000),
-    });
-
-    redisClient.on('connect', () => logger.debug('Redis connected'));
-    redisClient.on('error', (err: unknown) => {
-        logger.error('Redis client error:', err);
-    });
-    redisClient.on('end', () => {
-        logger.warn('Redis connection closed');
-    });
-
-    try {
-        await redisClient.connect();
-        clientInstance = redisClient;
-        currentMode = 'redis';
-        return clientInstance;
-    } catch (err) {
-        logger.error('ioredis connect error, falling back to in-memory:', err);
-        clientInstance = new InMemoriaRedis();
-        await clientInstance.connect();
-        currentMode = 'in-memory';
-        return clientInstance;
-    }
+export type RedisClient = {
+    get: (key: string) => Promise<string|null>;
+    set: (...args: unknown[]) => Promise<unknown>;
+    setex: (key: string, ttl: number, value: string) =>
+        Promise<unknown>;
+    del: (...keys: string[]) => Promise<unknown>;
+    scanStream: (opts: {match?: string}) => NodeJS.ReadableStream;
 }
 
-export default getRedisClient;
+async function createRedisClient():
+    Promise<RedisClient> {
+        const requested = process.env.REDIS_MODE as 'redis' |
+            'in-memory' | undefined;
+
+        if (requested === 'in-memory') {
+            const client = new InMemoriaRedis();
+            await client.connect();
+            return client as unknown as RedisClient;
+        }
+
+        const redisUrl =
+            process.env.REDIS_URL || 'redis://localhost:6379';
+        const client = new Redis(redisUrl, {
+            maxRetriesPerRequest: null,
+            retryStrategy: (times) => Math.min(times * 100, 2000),
+        });
+
+        client.on('connect', () => logger.debug('Redis connected'));
+        client.on(
+            'error',
+            (err: unknown) =>
+                logger.error('Redis client error:', err));
+        client.on(
+            'end', () => logger.warn('Redis connection closed'));
+
+        try {
+            await client.connect();
+            return client as unknown as RedisClient;
+        } catch (err) {
+            logger.error(
+                'ioredis connect error, falling back to in-memory:',
+                err);
+            const fallback = new InMemoriaRedis();
+            await fallback.connect();
+            return fallback as unknown as RedisClient;
+        }
+    }
+
+const redisClient = await createRedisClient();
+export default redisClient;

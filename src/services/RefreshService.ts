@@ -1,4 +1,4 @@
-import getRedisClient from '../config/redis';
+import redisClient from '../config/redis';
 
 const REFRESH_EXPIRE_SECONDS = 7 * 24 * 60 * 60;  // 7 Days in seconds
 
@@ -22,9 +22,9 @@ export class RefreshService
     static async save(uuid: string, token: string, sessionId: string):
         Promise<void>
     {
-        const client = await getRedisClient();
         const key = `refresh_token:${uuid}:${sessionId}`;
-        await client.set(key, token, 'EX', REFRESH_EXPIRE_SECONDS);
+        await redisClient.set(
+            key, token, 'EX', REFRESH_EXPIRE_SECONDS);
     }
 
     /**
@@ -41,9 +41,8 @@ export class RefreshService
     {
         // Require explicit sessionId — no fallback scanning.
         if (!sessionId) return false;
-        const client = await getRedisClient();
         const key = `refresh_token:${uuid}:${sessionId}`;
-        const storedToken = await client.get(key);
+        const storedToken = await redisClient.get(key);
         return storedToken === token;
     }
 
@@ -58,19 +57,14 @@ export class RefreshService
     static async revoke(uuid: string, sessionId?: string):
         Promise<void>
     {
-        const client = await getRedisClient();
         if (sessionId) {
             const key = `refresh_token:${uuid}:${sessionId}`;
-            await client.del(key);
+            await redisClient.del(key);
             return;
         }
 
-        // Revoke all device tokens for this user by scanning keys.
-        // The in-memory client provides a `scanStream` compatibility
-        // helper.
-        const stream = (client as any).scanStream({
-            match: `refresh_token:${uuid}:*`
-        });
+        const stream = redisClient.scanStream(
+            {match: `refresh_token:${uuid}:*`});
         const keysToDelete: string[] = [];
 
         return new Promise((resolve, reject) => {
@@ -81,7 +75,7 @@ export class RefreshService
             stream.on('end', async () => {
                 try {
                     if (keysToDelete.length)
-                        await client.del(...keysToDelete);
+                        await redisClient.del(...keysToDelete);
                     resolve();
                 } catch (err) {
                     reject(err);

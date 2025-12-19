@@ -1,16 +1,7 @@
 import {NextFunction, Request, Response} from 'express';
 
-import getRedisClient from '../config/redis';
+import redisClient, {RedisClient} from '../config/redis';
 import logger from '../utils/logger';
-
-type CacheClient = {
-    get?: (key: string) => Promise<string|null>;
-    set?: (...args: unknown[]) => Promise<unknown>;
-    setex?: (key: string, ttl: number, value: string) =>
-             Promise<unknown>;
-    del?: (...keys: string[]) => Promise<unknown>;
-    scanStream?: (opts: {match?: string}) => NodeJS.ReadableStream;
-};
 
 /**
  * Higher-order middleware function to cache GET responses in Redis.
@@ -26,15 +17,12 @@ export const cacheMiddleware = (durationSeconds: number = 60) => {
         const key = `cache:${req.originalUrl || req.url}`;
 
         try {
-            const client =
-                await getRedisClient();  // Outer scope client
-            const cachedData = await client.get(key);
+            const cachedData = await redisClient.get(key);
             if (cachedData) {
                 res.setHeader('Content-Type', 'application/json');
                 return res.send(JSON.parse(cachedData));
             }
 
-            // Hook into res.send to intercept the response
             const originalSend = res.send;
 
             res.send = (body: unknown): Response => {
@@ -49,32 +37,10 @@ export const cacheMiddleware = (durationSeconds: number = 60) => {
                             JSON.stringify(body);
                         (async () => {
                             try {
-                                const cachedClient =
-                                    await getRedisClient() as
-                                    unknown as CacheClient;
-                                if (typeof cachedClient.setex ===
-                                    'function') {
-                                    await cachedClient.setex!
-                                        (key,
-                                         durationSeconds,
-                                         dataToStore);
-                                }
-                                else if (
-                                    typeof cachedClient.set ===
-                                    'function') {
-                                    try {
-                                        await cachedClient.set!
-                                            (key,
-                                             dataToStore,
-                                             'EX',
-                                             durationSeconds);
-                                    } catch (e) {
-                                        await cachedClient.set!
-                                            (key,
-                                             dataToStore,
-                                             {EX: durationSeconds});
-                                    }
-                                }
+                                await redisClient.setex!
+                                    (key,
+                                     durationSeconds,
+                                     dataToStore);
                             } catch (err) {
                                 logger.error(
                                     'Redis Cache Error (SET):', err);
@@ -92,7 +58,7 @@ export const cacheMiddleware = (durationSeconds: number = 60) => {
             next();
         } catch (err) {
             logger.error('Redis Cache Error (GET):', err);
-            next();  // Proceed even if cache fails
+            next();
         }
     };
 };
