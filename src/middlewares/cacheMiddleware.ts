@@ -1,6 +1,6 @@
 import {NextFunction, Request, Response} from 'express';
 
-import redisClient, {RedisClient} from '../config/redis';
+import redisClient from '../config/redis';
 import logger from '../utils/logger';
 
 /**
@@ -37,10 +37,10 @@ export const cacheMiddleware = (durationSeconds: number = 60) => {
                             JSON.stringify(body);
                         (async () => {
                             try {
-                                await redisClient.setex!
-                                    (key,
-                                     durationSeconds,
-                                     dataToStore);
+                                await redisClient.setex(
+                                    key,
+                                    durationSeconds,
+                                    dataToStore);
                             } catch (err) {
                                 logger.error(
                                     'Redis Cache Error (SET):', err);

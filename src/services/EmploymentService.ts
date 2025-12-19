@@ -137,7 +137,7 @@ export class EmploymentService
         }
 
         // Finally remove the NGO entity
-        await ngoRepo.remove(ngo as any);
+        await ngoRepo.remove(ngo);
 
         return {status: 204};
     }

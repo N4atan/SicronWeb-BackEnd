@@ -51,5 +51,6 @@ export const SESSION_COOKIE_OPTIONS = {
                'none' | undefined) ||
         'lax',
     domain: process.env.COOKIE_DOMAIN || undefined,
-    maxAge: 365 * 24 * 60 * 60 * 1000,  // 1 year
+    //   maxAge: 365 * 24 * 60 * 60 * 1000,  // 1 year (default to
+    //   eternal)
 } as const;

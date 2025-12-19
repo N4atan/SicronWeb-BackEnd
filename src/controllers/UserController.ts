@@ -4,7 +4,7 @@ import {Request, Response} from 'express';
 import {COOKIE_NAMES} from '../config/cookies';
 import {User, UserRole} from '../entities/User';
 import {UserRepository} from '../repositories/UserRepository';
-import {AuthService} from '../services/AuthService';
+// import {AuthService} from '../services/AuthService';
 import {CryptService} from '../services/CryptService';
 import {RefreshService} from '../services/RefreshService';
 import {TokenService, UserPayload} from '../services/TokenService';

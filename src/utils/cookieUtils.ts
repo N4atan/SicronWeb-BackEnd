@@ -96,12 +96,11 @@ export const setSessionIdCookie =
  */
 export const setSessionIdSessionCookie =
     (res: Response, sessionId: string) => {
-        const {maxAge, ...rest} = SESSION_COOKIE_OPTIONS;
         const sessionCookie = serialize(
                                   COOKIE_NAMES.SESSION_ID,
                                   sessionId,
                                   {
-                                      ...rest,
+                                      ...SESSION_COOKIE_OPTIONS,
                                       path: '/',
                                   },
                                   ) +

@@ -23,9 +23,8 @@ export class AuthService
     static async check(
         accessToken: string|undefined,
         refreshToken: string|undefined,
-        sessionId: string|undefined,
-        roles?: Array<User['role']>|undefined|null,
-        ): Promise<{user?: User; status: AuthStatus}>
+        sessionId: string|
+        undefined): Promise<{user?: User; status: AuthStatus}>
     {
         try {
             let payload: UserPayload|undefined;
