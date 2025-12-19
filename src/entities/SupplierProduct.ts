@@ -1,7 +1,7 @@
 import {Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique,} from 'typeorm';
 
-import {Product} from './Product';
-import {Supplier} from './Supplier';
+import type {Product} from './Product';
+import type {Supplier} from './Supplier';
 
 /**
  * Entity representing a Product offered by a Supplier.
@@ -14,13 +14,13 @@ export class SupplierProduct
 {
     @PrimaryGeneratedColumn() public id!: number;
 
-    @ManyToOne(() => Supplier, (supplier) => supplier.products, {
+    @ManyToOne('Supplier', 'products', {
         onDelete: 'CASCADE',
     })
     @JoinColumn({name: 'supplier_id'})
     public supplier!: Supplier;
 
-    @ManyToOne(() => Product, (product) => product.supplierProducts, {
+    @ManyToOne('Product', 'supplierProducts', {
         onDelete: 'CASCADE',
     })
     @JoinColumn({name: 'product_id'})

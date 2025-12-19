@@ -1,8 +1,9 @@
 import {Column, Entity, Generated, JoinColumn, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn,} from 'typeorm';
 
 import {ApprovalStatus} from './ApprovalStatus';
-import {NGOProduct} from './NGOProduct';
-import {User} from './User';
+
+import type {NGOProduct} from './NGOProduct';
+import type {User} from './User';
 
 /**
  * Entity representing a Non-Governmental Organization (NGO).
@@ -44,17 +45,17 @@ import {User} from './User';
     })
     public status!: ApprovalStatus;
 
-    @OneToOne(() => User, {nullable: false, onDelete: 'CASCADE'})
+    @OneToOne(() => async () => (await import('./User')).User, {nullable: false, onDelete: 'CASCADE'})
     @JoinColumn({
         name: 'manager_uuid',
         referencedColumnName: 'uuid',
     })
     public manager!: User;
 
-    @ManyToMany(() => User, (user) => user.employedNGOs)
+    @ManyToMany(() => async () => (await import('./User')).User, (user: User) => user.employedNGOs)
     public employees!: User[];
 
-    @OneToMany(() => NGOProduct, (ngoProduct) => ngoProduct.ngo)
+    @OneToMany('NGOProduct', 'ngo')
     public products!: NGOProduct[];
 
     public constructor(partial?: Partial<NGO>)

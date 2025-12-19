@@ -1,6 +1,6 @@
 import {Column, CreateDateColumn, Entity, Generated, JoinColumn, ManyToOne, PrimaryGeneratedColumn,} from 'typeorm';
 
-import {Supplier} from './Supplier';
+import type {Supplier} from './Supplier';
 
 /**
  * Entity representing a payment receipt uploaded by a Supplier.
@@ -14,8 +14,8 @@ export class SupplierPaymentReceipt
     @Generated('uuid')
     public uuid!: string;
 
-    @ManyToOne(() => Supplier, (supplier) => supplier.paymentReceipts)
-    @JoinColumn({name: 'supplier_id'})
+    @ManyToOne('Supplier', 'paymentReceipts')
+    @JoinColumn({name: 'supplier_uuid', referencedColumnName: 'uuid'})
     public supplier!: Supplier;
 
     @Column() public fileUrl!: string;

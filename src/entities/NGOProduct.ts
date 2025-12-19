@@ -1,8 +1,8 @@
 import {Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique,} from 'typeorm';
 
-import {NGO} from './NGO';
-import {Product} from './Product';
-import {SupplierProduct} from './SupplierProduct';
+import type {NGO} from './NGO';
+import type {Product} from './Product';
+import type {SupplierProduct} from './SupplierProduct';
 
 /**
  * Entity representing a Product needed by an NGO.
@@ -16,17 +16,17 @@ export class NGOProduct
     @PrimaryGeneratedColumn() id!: number;
 
     @ManyToOne(
-        () => NGO, (ngo) => ngo.products, {onDelete: 'CASCADE'})
+        () => async () => (await import('./NGO')).NGO, (ngo: NGO) => ngo.products, {onDelete: 'CASCADE'})
     ngo!: NGO;
 
-    @ManyToOne(() => Product)
+    @ManyToOne('Product')
     @JoinColumn({
         name: 'ngo_needed_products_uuid',
         referencedColumnName: 'uuid',
     })
     product!: Product;
 
-    @ManyToOne(() => SupplierProduct, {nullable: true})
+    @ManyToOne('SupplierProduct', {nullable: true})
     @JoinColumn({name: 'supplier_product_id'})
     supplierProduct?: SupplierProduct;
 

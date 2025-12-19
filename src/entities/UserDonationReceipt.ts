@@ -1,7 +1,7 @@
 import {Column, CreateDateColumn, Entity, Generated, JoinColumn, ManyToOne, PrimaryGeneratedColumn,} from 'typeorm';
 
-import {NGO} from './NGO';
-import {User} from './User';
+import type {NGO} from './NGO';
+import type {User} from './User';
 
 /**
  * Entity representing a donation receipt uploaded by a User.
@@ -14,11 +14,11 @@ import {User} from './User';
     @Generated('uuid')
     public uuid!: string;
 
-    @ManyToOne(() => User)
+    @ManyToOne('User')
     @JoinColumn({name: 'user_id'})
     public user!: User;
 
-    @ManyToOne(() => NGO)
+    @ManyToOne('NGO')
     @JoinColumn({name: 'ngo_id'})
     public ngo!: NGO;
 

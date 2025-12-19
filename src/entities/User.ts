@@ -2,8 +2,8 @@ import {AfterLoad, BeforeInsert, BeforeUpdate, Column, Entity, Generated, JoinCo
 
 import {CryptService} from '../services/CryptService';
 
-import {NGO} from './NGO';
-import {Supplier} from './Supplier';
+import type {NGO} from './NGO';
+import type {Supplier} from './Supplier';
 
 export enum UserRole {
     USER = 'USER',
@@ -31,20 +31,20 @@ export enum UserRole {
     @Column({type: 'enum', enum: UserRole, default: UserRole.USER})
     public role!: UserRole;
 
-    @OneToOne(() => NGO, (ngo) => ngo.manager)
+    @OneToOne('NGO', 'manager')
     @JoinColumn(
         {name: 'managed_ngo_uuid', referencedColumnName: 'uuid'})
     public managedNGO?: NGO;
 
-    @OneToOne(() => Supplier, (s) => s.manager)
+    @OneToOne('Supplier', 'manager')
     @JoinColumn(
         {name: 'managed_supplier_uuid', referencedColumnName: 'uuid'})
     public managedSupplier?: Supplier;
 
-    @ManyToMany(() => NGO, (ngo) => ngo.employees)
+    @ManyToMany('NGO', 'employees')
     public employedNGOs!: NGO[];
 
-    @ManyToMany(() => Supplier, (s) => s.employees)
+    @ManyToMany('Supplier', 'employees')
     public employedSuppliers!: Supplier[];
 
     @Column({type: 'simple-array', nullable: true})

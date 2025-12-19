@@ -1,7 +1,7 @@
 import {Column, Entity, Generated, OneToMany, PrimaryGeneratedColumn,} from 'typeorm';
 
-import {NGOProduct} from './NGOProduct';
-import {SupplierProduct} from './SupplierProduct';
+import type {NGOProduct} from './NGOProduct';
+import type {SupplierProduct} from './SupplierProduct';
 
 /**
  * Entity representing a generic Product definition in the system
@@ -21,10 +21,10 @@ import {SupplierProduct} from './SupplierProduct';
 
     @Column({nullable: true}) public category!: string;
 
-    @OneToMany(() => SupplierProduct, (sp) => sp.product)
+    @OneToMany('SupplierProduct', 'product')
     public supplierProducts!: SupplierProduct[];
 
-    @OneToMany(() => NGOProduct, (np) => np.product)
+    @OneToMany('NGOProduct', 'product')
     public ngoProducts!: NGOProduct[];
 
     public constructor(partial?: Partial<Product>)

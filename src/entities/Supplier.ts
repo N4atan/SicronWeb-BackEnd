@@ -1,9 +1,10 @@
 import {Column, Entity, Generated, JoinColumn, ManyToMany, OneToMany, OneToOne, PrimaryGeneratedColumn,} from 'typeorm';
 
 import {ApprovalStatus} from './ApprovalStatus';
-import {SupplierPaymentReceipt} from './SupplierPaymentReceipt';
-import {SupplierProduct} from './SupplierProduct';
-import {User} from './User';
+
+import type {SupplierPaymentReceipt} from './SupplierPaymentReceipt';
+import type {SupplierProduct} from './SupplierProduct';
+import type {User} from './User';
 
 /**
  * Entity representing a Supplier organization.
@@ -18,14 +19,14 @@ import {User} from './User';
 
     @Column() public companyName!: string;
 
-    @OneToOne(() => User, {nullable: false, onDelete: 'CASCADE'})
+    @OneToOne(() => async () => (await import('./User')).User, {nullable: false, onDelete: 'CASCADE'})
     @JoinColumn({
         name: 'manager_uuid',
         referencedColumnName: 'uuid',
     })
     public manager!: User;
 
-    @ManyToMany(() => User, (user) => user.employedSuppliers)
+    @ManyToMany(() => async () => (await import('./User')).User, (user: User) => user.employedSuppliers)
     public employees!: User[];
 
     @Column() public tradeName!: string;
@@ -38,7 +39,7 @@ import {User} from './User';
 
     @Column({
         type: 'enum',
-        enum: ApprovalStatus,
+        enum:    ApprovalStatus,
         default: ApprovalStatus.PENDING,
     })
     public status!: ApprovalStatus;
@@ -55,10 +56,10 @@ import {User} from './User';
 
     @Column({nullable: true}) public postalCode!: string;
 
-    @OneToMany(() => SupplierProduct, (sp) => sp.supplier)
+    @OneToMany('SupplierProduct', 'supplier')
     public products!: SupplierProduct[];
 
-    @OneToMany(() => SupplierPaymentReceipt, (pr) => pr.supplier)
+    @OneToMany('SupplierPaymentReceipt', 'supplier')
     public paymentReceipts!: SupplierPaymentReceipt[];
 
     public constructor(partial?: Partial<Supplier>)
