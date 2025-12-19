@@ -1,6 +1,7 @@
+import {serialize} from 'cookie';
 import {Response} from 'express';
 
-import {COOKIE_NAMES, getCookieOptions, SESSION_COOKIE_OPTIONS, TOKEN_EXPIRATION} from '../config/cookies';
+import {COOKIE_NAMES, getCookieOptions, SESSION_COOKIE_OPTIONS, TOKEN_EXPIRATION,} from '../config/cookies';
 
 /**
  * Sets authentication cookies (Refresh and Access tokens).
@@ -15,15 +16,32 @@ export const setAuthCookies = (
     ) => {
     const options = getCookieOptions();
 
-    res.cookie(COOKIE_NAMES.REFRESH_TOKEN, refreshToken, {
-        ...options,
-        maxAge: TOKEN_EXPIRATION.REFRESH_TOKEN,
-    });
+    const refreshCookie =
+        serialize(
+            COOKIE_NAMES.REFRESH_TOKEN,
+            refreshToken,
+            {
+                ...options,
+                maxAge: TOKEN_EXPIRATION.REFRESH_TOKEN,
+                path: '/',
+            },
+            ) +
+        '; Partitioned';
 
-    res.cookie(COOKIE_NAMES.ACCESS_TOKEN, accessToken, {
-        ...options,
-        maxAge: TOKEN_EXPIRATION.ACCESS_TOKEN,
-    });
+    const accessCookie =
+        serialize(
+            COOKIE_NAMES.ACCESS_TOKEN,
+            accessToken,
+            {
+                ...options,
+                maxAge: TOKEN_EXPIRATION.ACCESS_TOKEN,
+                path: '/',
+            },
+            ) +
+        '; Partitioned';
+
+    res.append('Set-Cookie', refreshCookie);
+    res.append('Set-Cookie', accessCookie);
 };
 
 /**
@@ -32,24 +50,78 @@ export const setAuthCookies = (
  */
 export const clearAuthCookies = (res: Response) => {
     const options = getCookieOptions();
-    res.clearCookie(COOKIE_NAMES.REFRESH_TOKEN, options);
-    res.clearCookie(COOKIE_NAMES.ACCESS_TOKEN, options);
+
+    const clearRefresh = serialize(
+                             COOKIE_NAMES.REFRESH_TOKEN,
+                             '',
+                             {...options, maxAge: 0, path: '/'},
+                             ) +
+        '; Partitioned';
+
+    const clearAccess = serialize(
+                            COOKIE_NAMES.ACCESS_TOKEN,
+                            '',
+                            {...options, maxAge: 0, path: '/'},
+                            ) +
+        '; Partitioned';
+
+    res.append('Set-Cookie', clearRefresh);
+    res.append('Set-Cookie', clearAccess);
 };
 
+/**
+ * Sets the Session ID cookie (persistent).
+ * @param res - Express Response.
+ * @param sessionId - Session identifier string.
+ */
 export const setSessionIdCookie =
     (res: Response, sessionId: string) => {
-        res.cookie(
-            COOKIE_NAMES.SESSION_ID,
-            sessionId,
-            SESSION_COOKIE_OPTIONS);
+        const sessionCookie = serialize(
+                                  COOKIE_NAMES.SESSION_ID,
+                                  sessionId,
+                                  {
+                                      ...SESSION_COOKIE_OPTIONS,
+                                      path: '/',
+                                  },
+                                  ) +
+            '; Partitioned';
+
+        res.append('Set-Cookie', sessionCookie);
     };
 
+/**
+ * Sets the Session ID cookie (session-only).
+ * @param res - Express Response.
+ * @param sessionId - Session identifier string.
+ */
 export const setSessionIdSessionCookie =
     (res: Response, sessionId: string) => {
-        const {maxAge: _, ...rest} = SESSION_COOKIE_OPTIONS;
-        res.cookie(COOKIE_NAMES.SESSION_ID, sessionId, rest);
+        const {maxAge, ...rest} = SESSION_COOKIE_OPTIONS;
+        const sessionCookie = serialize(
+                                  COOKIE_NAMES.SESSION_ID,
+                                  sessionId,
+                                  {
+                                      ...rest,
+                                      path: '/',
+                                  },
+                                  ) +
+            '; Partitioned';
+
+        res.append('Set-Cookie', sessionCookie);
     };
 
+/**
+ * Clears the Session ID cookie.
+ * @param res - Express Response.
+ */
 export const clearSessionIdCookie = (res: Response) => {
-    res.clearCookie(COOKIE_NAMES.SESSION_ID, SESSION_COOKIE_OPTIONS);
+    const clearSession =
+        serialize(
+            COOKIE_NAMES.SESSION_ID,
+            '',
+            {...SESSION_COOKIE_OPTIONS, maxAge: 0, path: '/'},
+            ) +
+        '; Partitioned';
+
+    res.append('Set-Cookie', clearSession);
 };

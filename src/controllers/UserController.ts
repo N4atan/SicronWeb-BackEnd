@@ -81,7 +81,7 @@ export class UserController
                 delete safeObj.password;
                 delete safeObj.id;
                 delete safeObj.previous_password;
-                
+
                 logger.table(safe);
                 return res.status(200).json(safe);
             }
