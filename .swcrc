@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/swc-project/swc/master/node-swc.json",
+  "jsc": {
+    "target": "es2022",
+    "parser": {
+      "syntax": "typescript",
+      "tsx": true,
+      "topLevelAwait": true,
+      "importMeta": true,
+      "decorators": true
+    },
+    "minify": {
+      "compress": {
+        "unused": true,
+        "reduce_funcs": true,
+        "booleans_as_integers": true
+      },
+      "mangle": true
+    },
+    "transform": {
+      "legacyDecorator": true,
+      "decoratorMetadata": true
+    },
+    "keepClassNames": false,
+    "loose": true 
+  },
+  "module": {
+    "type": "commonjs",
+    "strict": true,
+    "strictMode": true,
+    "noInterop": false,
+    "resolveFully": true,
+    "outFileExtension": "js"
+  },
+  "sourceMaps": false
+}
+

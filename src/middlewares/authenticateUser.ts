@@ -31,7 +31,6 @@ export function authenticateUser(
         switch (status) {
             case AuthStatus.AUTHENTICATED:
                 if (roles && !roles.includes(user!.role)) {
-                    await AuthUtil.clearSession(res);
                     return res.sendStatus(403);
                 }
 
