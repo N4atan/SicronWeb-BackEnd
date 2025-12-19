@@ -6,6 +6,18 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 
+# Package lock
+package-lock.json
+
+# Test HTMLs
+*.html
+
+# VIM
+*.swp
+*.swo
+*.swb
+*.swc
+
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
@@ -59,8 +71,21 @@ web_modules/
 # Optional REPL history
 .node_repl_history
 
-# Output of 'npm pack'
+# Compressed files and archives 
 *.tgz
+*.txz
+*.tb2
+*.tar
+*.rar
+*.zip
+*.7z
+*.bz2
+*.xz
+*.gz
+*.zz
+*.Z
+*.z
+
 
 # Yarn Integrity file
 .yarn-integrity
@@ -81,6 +106,7 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+*.js
 
 # Gatsby files
 .cache/
@@ -137,3 +163,96 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Unrelated to backend, for sure.
+*.css
+*.chk
+*.dol
+*.exe
+*.dll
+*.so
+*.o
+*.a
+*.ar
+*.cpio
+*.tif
+*.heif
+*.heic
+*.jxl
+*.exr
+*.dds
+*.tga
+*.pcx
+*.ppm
+*.pgm
+*.pbm
+*.pnm
+*.cur
+*.psd
+*.xcf
+*.qoi
+*.svg
+*.eps
+*.ai
+*.wmf
+*.emf
+*.fig
+*.cgm
+*.plt
+*.hpgl
+*.hdr
+*.fits
+*.dcm
+*.avi
+*.wvm
+*.fiv
+*.asf
+*.f4v
+*.webm
+*.ogv
+*.ogm
+*.ts
+*.m2ts
+*.3gp
+*.3g2
+*.rm
+*.rmvb
+*.vob
+*.mxf
+*.f4p
+*.f4a
+*.aac
+*.m4a
+*.ogg
+*.oga
+*.flac
+*.alac
+*.wma
+*.amr
+*.dts
+*.bwf
+*.mpc
+*.mid
+*.midi
+*.kar
+*.veg
+*.aep
+*.prproj
+*.core
+*.mp4
+*.mp3
+*.wav
+*.opus
+*.mov
+*.mkv
+*.avif
+*.gif
+*.webp
+*.png
+*.jpeg
+*.jpg
+*.bmp
+*.ico
+*.tiff
+*.iso
+*.img

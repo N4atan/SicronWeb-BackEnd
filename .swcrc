@@ -9,20 +9,12 @@
       "importMeta": true,
       "decorators": true
     },
-    "minify": {
-      "compress": {
-        "unused": true,
-        "reduce_funcs": true,
-        "booleans_as_integers": true
-      },
-      "mangle": true
-    },
     "transform": {
       "legacyDecorator": true,
       "decoratorMetadata": true
     },
     "keepClassNames": false,
-    "loose": true 
+    "loose": false 
   },
   "module": {
     "type": "commonjs",
@@ -34,4 +26,3 @@
   },
   "sourceMaps": false
 }
-
