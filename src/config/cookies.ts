@@ -38,7 +38,7 @@ export function getCookieOptions()
         httpOnly: true,
         secure,
         sameSite,
-        domain,
+        domain: domain || undefined
     } as const;
 }
 
