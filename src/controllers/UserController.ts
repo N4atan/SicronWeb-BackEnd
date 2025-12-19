@@ -79,6 +79,9 @@ export class UserController
                 const safe = {...userWithRelations} as Partial<User>;
                 const safeObj = safe as Record<string, unknown>;
                 delete safeObj.password;
+                delete safeObj.id;
+                delete safeObj.previous_password;
+                
                 logger.table(safe);
                 return res.status(200).json(safe);
             }
@@ -235,6 +238,7 @@ export class UserController
             }
 
             delete (userResponse as Partial<User>).password;
+            delete (userResponse as Partial<User>).previous_password;
             delete (userResponse as Partial<User>).id;
 
             return userResponse;

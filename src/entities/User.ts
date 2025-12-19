@@ -53,7 +53,7 @@ export enum UserRole {
     @Column({type: 'simple-array', nullable: true})
     public blockedSuppliers?: string[];
 
-    private previous_password?: string;
+    public previous_password?: string;
 
     @Column({type: 'datetime', default: () => 'CURRENT_TIMESTAMP'})
     public creation_date!: Date;
