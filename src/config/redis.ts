@@ -13,12 +13,9 @@ export async function getRedisClient(mode?: 'redis'|'in-memory')
     const requested: 'redis'|'in-memory' = mode || envMode ||
         (process.env.REDIS_URL ? 'redis' : 'in-memory');
 
-    if (currentMode === 'redis') return clientInstance as Redis;
-
-    if (clientInstance && currentMode === requested) {
-        return clientInstance;
-    }
-
+    if (clientInstance && currentMode == process.env.REDIS_MODE) return clientInstance;
+    if (clientInstance && currentMode === requested) return clientInstance;
+    
     if (clientInstance && currentMode !== requested) {
         logger.warn(`Redis mode changed from "${currentMode}" to "${
             requested}"`);
