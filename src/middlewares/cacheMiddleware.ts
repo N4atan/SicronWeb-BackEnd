@@ -8,7 +8,10 @@ import logger from '../utils/logger';
  * @param durationSeconds - Time to live in seconds (default 60).
  */
 export const cacheMiddleware = (durationSeconds: number = 60) => {
-    return async (
+    return async (req: Request, res: Response, next: NextFunction) => {
+        next();
+;   };
+ /*   return async (
                req: Request, res: Response, next: NextFunction) => {
         if (req.method !== 'GET') {
             return next();
@@ -60,5 +63,5 @@ export const cacheMiddleware = (durationSeconds: number = 60) => {
             logger.error('Redis Cache Error (GET):', err);
             next();
         }
-    };
+    };*/
 };
