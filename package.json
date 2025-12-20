@@ -4,18 +4,18 @@
   "description": "API backend com TypeScript e Express",
   "main": "dist/server.js",
   "scripts": {
-    "build": "swc src -d dist --strip-leading-paths",
+    "build": "swc -C swcrc.json src -d dist --strip-leading-paths",
+    "build-tsc": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",
     "reset-db": "tsx src/scripts/reset-db.ts",
     "check-db": "tsx @swc-node/register src/scripts/check-db.ts",
     "lint": "eslint .",
     "format": "clang-format -i -style=file --glob=\"src/**/*.ts\" --glob=\"src/**/*.js\"",
-    "typecheck": "swc src --noEmit",
+    "typecheck": "tsc --noEmit",
     "docs": "npm run docs:html",
     "docs:html": "typedoc --out docs/html",
-    "docs:md": "typedoc --out docs/markdown --plugin typedoc-plugin-markdown",
-    "test:runtime": "node tests/run.js"
+    "docs:md": "typedoc --out docs/markdown --plugin typedoc-plugin-markdown"
   },
   "keywords": [],
   "author": "",
