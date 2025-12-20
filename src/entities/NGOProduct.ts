@@ -1,4 +1,4 @@
-import {Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique,} from 'typeorm';
+import {Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, Unique} from 'typeorm';
 
 import type {NGO} from './NGO';
 import type {Product} from './Product';
@@ -13,26 +13,29 @@ import type {SupplierProduct} from './SupplierProduct';
 @Unique(['ngo', 'product'])
 export class NGOProduct
 {
-    @PrimaryGeneratedColumn() id!: number;
+    @PrimaryGeneratedColumn() public id!: number;
 
-    @ManyToOne(
-        () => async () => (await import('./NGO')).NGO, (ngo: NGO) => ngo.products, {onDelete: 'CASCADE'})
-    ngo!: NGO;
+    @ManyToOne('NGO', 'products')
+    @JoinColumn({
+        name: 'ngo_uuid',
+        referencedColumnName: 'uuid'
+    })
+    public ngo!: NGO;
 
     @ManyToOne('Product')
     @JoinColumn({
         name: 'ngo_needed_products_uuid',
         referencedColumnName: 'uuid',
     })
-    product!: Product;
+    public product!: Product;
 
     @ManyToOne('SupplierProduct', {nullable: true})
     @JoinColumn({name: 'supplier_product_id'})
-    supplierProduct?: SupplierProduct;
+    public supplierProduct?: SupplierProduct;
 
-    @Column('int') quantity!: number;
+    @Column('int') public quantity!: number;
 
-    @Column({nullable: true}) notes?: string;
+    @Column({nullable: true}) public notes?: string;
 
     public constructor(partial: Partial<NGOProduct>)
     {

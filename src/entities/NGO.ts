@@ -2,7 +2,7 @@ import {Column, Entity, Generated, JoinColumn, ManyToMany, OneToMany, OneToOne, 
 
 import {ApprovalStatus} from './ApprovalStatus';
 
-import type {NGOProduct} from './NGOProduct';
+import {NGOProduct} from './NGOProduct';
 import type {User} from './User';
 
 /**
@@ -45,17 +45,17 @@ import type {User} from './User';
     })
     public status!: ApprovalStatus;
 
-    @OneToOne(() => async () => (await import('./User')).User, {nullable: false, onDelete: 'CASCADE'})
+    @OneToOne('User', {nullable: false, onDelete: 'CASCADE'})
     @JoinColumn({
         name: 'manager_uuid',
         referencedColumnName: 'uuid',
     })
     public manager!: User;
 
-    @ManyToMany(() => async () => (await import('./User')).User, (user: User) => user.employedNGOs)
+    @ManyToMany('User', 'employedNGOs')
     public employees!: User[];
 
-    @OneToMany(() => async () => (await import('./NGOProduct')).NGOProduct, (prod: NGOProduct) => prod.ngo)
+    @OneToMany('NGOProduct', 'ngo')
     public products!: NGOProduct[];
 
     public constructor(partial?: Partial<NGO>)

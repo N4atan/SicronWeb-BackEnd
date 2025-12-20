@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "node",
+    "module": "commonjs",
     "allowImportingTsExtensions": false,
     "noEmit": true,
     "skipLibCheck": true,

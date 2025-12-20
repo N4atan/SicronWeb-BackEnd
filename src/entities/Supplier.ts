@@ -19,14 +19,14 @@ import type {User} from './User';
 
     @Column() public companyName!: string;
 
-    @OneToOne(() => async () => (await import('./User')).User, {nullable: false, onDelete: 'CASCADE'})
+    @OneToOne('User', {nullable: false, onDelete: 'CASCADE'})
     @JoinColumn({
         name: 'manager_uuid',
         referencedColumnName: 'uuid',
     })
     public manager!: User;
 
-    @ManyToMany(() => async () => (await import('./User')).User, (user: User) => user.employedSuppliers)
+    @ManyToMany('User', 'employedSuppliers')
     public employees!: User[];
 
     @Column() public tradeName!: string;
