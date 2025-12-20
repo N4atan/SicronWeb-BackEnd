@@ -28,7 +28,7 @@ async function createRedisClient(): Promise<RedisClient> {
     client.on('connect', () => logger.debug('Redis connected'));
     client.on('error', (err: unknown) => logger.error('Redis client error:', err));
     client.on('end', () => logger.warn('Redis connection closed'));
-    
+
     return client as unknown as RedisClient;
 }
 

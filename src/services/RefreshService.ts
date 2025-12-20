@@ -23,8 +23,8 @@ export class RefreshService
         Promise<void>
     {
         const key = `refresh_token:${uuid}:${sessionId}`;
-        await redisClient.set(
-            key, token, 'EX', REFRESH_EXPIRE_SECONDS);
+        await redisClient.setex(
+            key, token, REFRESH_EXPIRE_SECONDS);
     }
 
     /**
