@@ -1,7 +1,7 @@
 {
-  "name": "api",
-  "version": "1.0.0",
-  "description": "API backend com TypeScript e Express",
+  "name": "sicron-web-backend",
+  "version": "1.1.0",
+  "description": "Backend do projeto do SICRON, feito com Typescript, Express, TypeORM, CORS, Helmet, CookieParser, RateLimit e IORedis. Consulte o README.md para mais informações.",
   "main": "dist/server.js",
   "scripts": {
     "build": "swc -C swcrc.json src -d dist --strip-leading-paths",
@@ -18,8 +18,8 @@
     "docs:md": "typedoc --out docs/markdown --plugin typedoc-plugin-markdown"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Arthur de Souza Manske, Natan Gabriel Wildner",
+  "license": "BSD-3-Clause-Clear",
   "devDependencies": {
     "@prettier/plugin-php": "^0.24.0",
     "@swc/cli": "^0.7.9",
