@@ -1,4 +1,4 @@
-import {FindManyOptions} from 'typeorm';
+import {FindManyOptions,Repository} from 'typeorm';
 
 import {AppDataSource} from '../config/data-source';
 import {Supplier} from '../entities/Supplier';
@@ -10,7 +10,7 @@ import logger from '../utils/logger';
  */
 export class SupplierRepository
 {
-    public repository = AppDataSource.getRepository(Supplier);
+    public repository: Repository<Supplier> = AppDataSource.getRepository(Supplier);
 
     /**
      * Creates and saves a new Supplier.

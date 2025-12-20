@@ -4,7 +4,7 @@
   "description": "Backend do projeto do SICRON, feito com Typescript, Express, TypeORM, CORS, Helmet, CookieParser, RateLimit e IORedis. Consulte o README.md para mais informações.",
   "main": "dist/server.js",
   "scripts": {
-    "build": "swc -C swcrc.json src -d dist --strip-leading-paths",
+    "build": "swc src -d dist --strip-leading-paths",
     "build-tsc": "tsc",
     "start": "node dist/server.js",
     "dev": "tsx src/server.ts",

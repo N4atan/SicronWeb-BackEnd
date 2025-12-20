@@ -13,7 +13,7 @@
       "decoratorMetadata": true
     },
     "keepClassNames": true,
-    "loose": false
+    "loose": true 
   },
   "module": {
     "type": "commonjs",

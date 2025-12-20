@@ -1,4 +1,4 @@
-import {FindManyOptions, Repository} from 'typeorm';
+import {FindManyOptions,Repository} from 'typeorm';
 
 import {AppDataSource} from '../config/data-source';
 import {NGO} from '../entities/NGO';
