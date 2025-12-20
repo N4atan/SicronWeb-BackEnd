@@ -24,7 +24,7 @@ export class RefreshService
     {
         const key = `refresh_token:${uuid}:${sessionId}`;
         await redisClient.setex(
-            key, token, Number(REFRESH_EXPIRE_SECONDS));
+            key, REFRESH_EXPIRE_SECONDS, token);
     }
 
     /**
