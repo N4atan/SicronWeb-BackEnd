@@ -211,7 +211,6 @@ vite.config.ts.timestamp-*
 *.webm
 *.ogv
 *.ogm
-*.ts
 *.m2ts
 *.3gp
 *.3g2
