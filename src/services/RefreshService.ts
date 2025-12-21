@@ -19,7 +19,7 @@ export class RefreshService {
     }
 
     static async save(uuid: string, token: string, sessionId: string, ip?: string, ua?: string): Promise<void> {
-        const key = `refresh_token:${uuid}:${sessionId}:${ip}:${ua}`;
+        const key = `refresh_token:${uuid}:${sessionId}`;
         const fingerprint = new Fingerprint(ip || '0.0.0.0', ua || '');
         const payload = { token, fingerprint };
         await RefreshService.client?.setex(key, REFRESH_EXPIRE_SECONDS, JSON.stringify(payload));
@@ -27,7 +27,7 @@ export class RefreshService {
 
     static async isValid(uuid: string, token: string, sessionId: string, ip?: string, ua?: string): Promise<boolean> {
         if (!sessionId) return false;
-        const key = `refresh_token:${uuid}:${sessionId}:${ip}:${ua}`;
+        const key = `refresh_token:${uuid}:${sessionId}`;
         const storedRaw = await RefreshService.client?.get(key);
         if (!storedRaw) return false;
 
