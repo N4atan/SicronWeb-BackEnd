@@ -13,6 +13,7 @@ export interface TokenPair {
 export interface UserPayload {
     id: string;  // User UUID
     email?: string;
+    sessionId?: string;
     [key: string]: unknown;
 }
 

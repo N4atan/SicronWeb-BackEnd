@@ -4,12 +4,12 @@ import {Request, Response} from 'express';
 import {COOKIE_NAMES} from '../config/cookies';
 import {User, UserRole} from '../entities/User';
 import {UserRepository} from '../repositories/UserRepository';
-// import {AuthService} from '../services/AuthService';
+import {AuthService} from '../services/AuthService';
 import {CryptService} from '../services/CryptService';
 import {RefreshService} from '../services/RefreshService';
 import {TokenService, UserPayload} from '../services/TokenService';
-import {AuthUtil} from '../utils/AuthUtil';
-import {setSessionIdSessionCookie} from '../utils/cookieUtils';
+import {setAuthCookies,setSessionIdCookie,clearAuthCookies,clearSessionIdCookie} from '../utils/cookieUtils';
+import {getClientIp} from '../utils/getClientIp';
 import logger from '../utils/logger';
 
 /**
@@ -68,14 +68,10 @@ export class UserController
         Promise<Response>
     {
         if (req.logged || req.user) {
-            const userWithRelations =
-                await UserController.userRepo.findByUUID(
-                    req.user!.uuid) as Partial<User>;
-
-            logger.debug(
-                'UserController.isLogged - user present',
-                {uuid: req.user!.uuid});
-            if (userWithRelations) {
+            const userWithRelations = await UserController.userRepo.findByUUID(req.user!.uuid) as Partial<User>;
+            logger.debug('UserController.isLogged - user present', {uuid: req.user!.uuid});
+            
+	    if (userWithRelations) {
                 const safe = {...userWithRelations} as Partial<User>;
                 const safeObj = safe as Record<string, unknown>;
                 delete safeObj.password;
@@ -129,12 +125,14 @@ export class UserController
 
         if (!sessionId) {
             sessionId = randomUUID();
-            setSessionIdSessionCookie(res, sessionId);
+            setSessionIdCookie(res, sessionId);
         }
 
-        await AuthUtil.login(res, user, sessionId!);
-
-        logger.info(
+        const { accessToken, refreshToken } = await AuthService.login(user, sessionId, getClientIp(req), req.get('user-agent') || '');
+	if (!accessToken || !refreshToken) return res.status(401).send();
+    setAuthCookies(res, accessToken, refreshToken);
+        
+	logger.info(
             'UserController.login - success',
             {uuid: user.uuid, email: user.email});
 
@@ -177,17 +175,18 @@ export class UserController
             });
         }
 
-        const valid = await RefreshService.isValid(
-            payload.id, token, sessionId);
+        const valid = await RefreshService.isValid(payload.id, token, sessionId);
         if (!valid)
             return res.status(403).json({
                 message:
                     'Dados inválidos fornecidos ao serviço de autentificação!'
             });
 
-        await AuthUtil.refresh(res, user, token, sessionId);
-        logger.info(
-            'UserController.refresh - success', {uuid: user.uuid});
+	const newTokens = await AuthService.refresh(user, token, sessionId, getClientIp(req), req.get('user-agent') || '');
+    if (!newTokens) return res.status(403).json();
+	setAuthCookies(res, newTokens.accessToken, newTokens.refreshToken);
+        
+	logger.info('UserController.refresh - success', {uuid: user.uuid});
         return this.isLogged(req, res);
     }
 
@@ -205,9 +204,12 @@ export class UserController
         const sessionId =
             (req.cookies[COOKIE_NAMES.SESSION_ID] as string) ||
             undefined;
+	
+	await AuthService.logout(token, sessionId);
 
-        await AuthUtil.logout(res, token, sessionId);
-        logger.info('UserController.logout - success', {sessionId});
+        clearAuthCookies(res);
+	clearSessionIdCookie(res);
+	logger.info('UserController.logout - success', {sessionId});
         return res.status(204).send();
     }
 

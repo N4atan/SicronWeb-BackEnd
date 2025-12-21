@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import {errorHandler} from './middlewares/errorHandler';
 import IndexRouter from './routers/index';
 import logger from './utils/logger';
+import {getClientIp} from './utils/getClientIp';
 
 /**
  * Main Application Class
@@ -35,8 +36,6 @@ export class App
      */
     private config(): void
     {
-        this.app.set('trust proxy', true);
-
         this.app.use(cookieParser());
         this.app.use(express.json());
         this.app.use(compression());
@@ -80,7 +79,10 @@ export class App
         this.app.use((req, _res, next) => {
             logger.warn(
                 '------------------ Incoming request -----------\n\n');
-	    logger.warn('---> IP Address ---> ', req.ip);
+	    logger.warn('---> REQ IP Address ---> ', req.ip);
+	    logger.warn('.... finding real IP address....');
+	    logger.warn('---> Resolved IP Address ---> ', getClientIp(req));
+
             next();
         })
     }

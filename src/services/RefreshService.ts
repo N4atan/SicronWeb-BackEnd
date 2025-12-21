@@ -1,82 +1,55 @@
-import redisClient,{RedisClient} from '../config/redis';
+import crypto from 'crypto';
+import ipaddr from 'ipaddr.js';
+import { lookup } from 'geoip-lite';
+import redisClient, { RedisClient } from '../config/redis';
+import logger from '../utils/logger';
 
-const REFRESH_EXPIRE_SECONDS = 7 * 24 * 60 * 60;  // 7 Days in seconds
+import {Fingerprint} from '../utils/Fingerprint';
+
+const REFRESH_EXPIRE_SECONDS = 15 * 60;
 
 /**
  * Service for managing Refresh Tokens via Redis.
- *
- * Tokens are bound to a session identifier (sessionId) instead
- * of client IP. This identifies a logged session (per browser)
- * and allows per-session revocation.
  */
-export class RefreshService
-{
-    private static client: RedisClient | undefined; 
+export class RefreshService {
+    private static client: RedisClient | undefined;
 
-    /**
-     * Initializes the RefreshService Redis client.
-     *
-     * @returns Promise<void>
-     */
-    static async init(): Promise<void>
-    {
-    	RefreshService.client = await redisClient;
-    }
- 
-    /**
-     * Saves a refresh token in Redis.
-     *
-     * @param uuid - User UUID.
-     * @param token - The refresh token string.
-     * @param sessionId - Session identifier.
-     * @returns Promise<void>
-     */
-    static async save(uuid: string, token: string, sessionId: string):
-        Promise<void>
-    {
-        const key = `refresh_token:${uuid}:${sessionId}`;
-        await RefreshService.client?.setex(
-            key, REFRESH_EXPIRE_SECONDS, token);
+    static async init(): Promise<void> {
+        RefreshService.client = await redisClient;
     }
 
-    /**
-     * Validates a refresh token against Redis.
-     *
-     * @param uuid - User UUID.
-     * @param token - The refresh token string to match.
-     * @param sessionId - Session identifier (required).
-     * @returns Promise<boolean> - True if valid, false otherwise.
-     */
-    static async isValid(
-        uuid: string, token: string, sessionId: string):
-        Promise<boolean>
-    {
-        // Require explicit sessionId — no fallback scanning.
+    static async save(uuid: string, token: string, sessionId: string, ip?: string, ua?: string): Promise<void> {
+        const key = `refresh_token:${uuid}:${sessionId}:${ip}:${ua}`;
+        const fingerprint = new Fingerprint(ip || '0.0.0.0', ua || '');
+        const payload = { token, fingerprint };
+        await RefreshService.client?.setex(key, REFRESH_EXPIRE_SECONDS, JSON.stringify(payload));
+    }
+
+    static async isValid(uuid: string, token: string, sessionId: string, ip?: string, ua?: string): Promise<boolean> {
         if (!sessionId) return false;
-        const key = `refresh_token:${uuid}:${sessionId}`;
-        const storedToken = await RefreshService.client?.get(key);
-        return storedToken === token;
+        const key = `refresh_token:${uuid}:${sessionId}:${ip}:${ua}`;
+        const storedRaw = await RefreshService.client?.get(key);
+        if (!storedRaw) return false;
+
+        try {
+            const { token: storedToken, fingerprint } = JSON.parse(storedRaw);
+            if (storedToken !== token) return false;
+            if (!fingerprint) return false;
+            return fingerprint.equals(new Fingerprint(ip || '0.0.0.0', ua || ''));
+        } catch (err) {
+            logger.error('RefreshService.isValid parse error:', err);
+            return false;
+        }
     }
 
-    /**
-     * Revokes refresh tokens.
-     *
-     * @param uuid - User UUID.
-     * @param sessionId - Optional sessionId to revoke specific token.
-     *     If omitted, revokes ALL session tokens for user.
-     * @returns Promise<void>
-     */
-    static async revoke(uuid: string, sessionId?: string):
-        Promise<void>
-    {
+    static async revoke(uuid: string, sessionId?: string, ip?: string, ua?: string): Promise<void> {
         if (sessionId) {
-            const key = `refresh_token:${uuid}:${sessionId}`;
+            const key = `refresh_token:${uuid}:${sessionId}:${ip}:${ua}`;
             await RefreshService.client?.del(key);
             return;
         }
 
-        const stream = RefreshService.client?.scanStream(
-            {match: `refresh_token:${uuid}:*`});
+        const stream = RefreshService.client?.scanStream({ match: `refresh_token:${uuid}:*` });
         const keysToDelete: string[] = [];
 
         return new Promise((resolve, reject) => {
@@ -86,8 +59,7 @@ export class RefreshService
 
             stream?.on('end', async () => {
                 try {
-                    if (keysToDelete.length)
-                        await RefreshService.client?.del(...keysToDelete);
+                    if (keysToDelete.length) await RefreshService.client?.del(...keysToDelete);
                     resolve();
                 } catch (err) {
                     reject(err);

@@ -2,7 +2,7 @@ import {NextFunction, Request, Response} from 'express';
 
 import {UserRole} from '../entities/User';
 import {AuthService, AuthStatus} from '../services/AuthService';
-import {AuthUtil} from '../utils/AuthUtil';
+import {clearAuthCookies, clearSessionIdCookie} from '../utils/cookieUtils';
 
 /**
  * Middleware Factor for User Authentication.
@@ -26,7 +26,7 @@ export function authenticateUser(
         const sessionId = req.cookies?.sessionId || undefined;
 
         const {user, status} = await AuthService.check(
-            accessToken, refreshToken, sessionId);
+            accessToken, refreshToken, sessionId, req.ip, req.get('user-agent'));
 
         switch (status) {
             case AuthStatus.AUTHENTICATED:
@@ -43,7 +43,8 @@ export function authenticateUser(
                 return next();
 
             case AuthStatus.FORBIDDEN:
-                await AuthUtil.clearSession(res);
+                clearAuthCookies(res);
+                clearSessionIdCookie(res);
                 if (required) {
                     return res.sendStatus(403);
                 }

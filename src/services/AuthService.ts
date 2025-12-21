@@ -7,7 +7,8 @@ import {TokenPair, TokenService, UserPayload} from './TokenService';
 
 const userRepo = new UserRepository();
 
-export enum AuthStatus {
+export enum AuthStatus
+{
     AUTHENTICATED = 0,
     UNAUTHENTICATED = 1,
     FORBIDDEN = 2,
@@ -23,11 +24,13 @@ export class AuthService
     static async check(
         accessToken: string|undefined,
         refreshToken: string|undefined,
-        sessionId: string|
-        undefined): Promise<{user?: User; status: AuthStatus}>
+        sessionId: string|undefined,
+	ip?: string,
+	userAgent?: string): Promise<{user?: User; status: AuthStatus}>
     {
         try {
             let payload: UserPayload|undefined;
+            let user: User|undefined;
 
             if (!accessToken) {
                 logger.debug('Auth: no access token provided');
@@ -48,12 +51,13 @@ export class AuthService
                 return {status: AuthStatus.FORBIDDEN};
             }
 
-            const user = await userRepo.findByUUID(payload.id);
-            if (!user?.id) {
+            const foundUser = await userRepo.findByUUID(payload.id);
+            if (!foundUser) {
                 logger.warn(
                     'Auth: user not found for id', payload.id);
                 return {status: AuthStatus.FORBIDDEN};
             }
+            user = foundUser;
 
             if (payload.email !== user.email) {
                 logger.warn('Auth: token email mismatch', {
@@ -63,24 +67,31 @@ export class AuthService
                 return {status: AuthStatus.FORBIDDEN};
             }
 
+            if (!refreshToken) {
+                logger.warn('Auth: Refresh token not present');
+                return {status: AuthStatus.FORBIDDEN};
+            }
+
             if (!sessionId) {
                 logger.warn(
                     'Auth: refresh token present but missing sessionId');
                 return {status: AuthStatus.FORBIDDEN};
             }
 
-            if (!refreshToken) {
-                logger.warn('Auth: Refresh token not present');
+            if (sessionId !== payload.sessionId) {
+                logger.warn('Auth: session id mismatch', {
+                    sessionId,
+                    payloadSessionId: payload.sessionId
+                });
                 return {status: AuthStatus.FORBIDDEN};
             }
 
             const valid = await RefreshService.isValid(
-                user.uuid, refreshToken, sessionId);
+                user.uuid, refreshToken, sessionId, ip, userAgent);
             if (!valid) {
                 logger.warn('Auth: refresh token not valid');
                 return {status: AuthStatus.EXPIRED};
             }
-
 
             logger.debug(
                 'Auth: user authenticated',
@@ -92,51 +103,49 @@ export class AuthService
         }
     }
 
-    // Pure service methods: do not touch Express `res`/`req`.
-    // Return token pairs so controllers can set cookies.
-    static async login(user: User, sessionId: string):
+    static async login(user: User, sessionId: string, ip: string, ua: string):
         Promise<TokenPair>
     {
         logger.info(
             'AuthService.login - generating tokens',
             {uuid: user.uuid, sessionId});
         const tokens = TokenService.generateTokenPair(
-            {id: user.uuid, email: user.email});
+            {id: user.uuid, email: user.email, sessionId: sessionId });
         await RefreshService.save(
-            user.uuid, tokens.refreshToken, sessionId);
+            user.uuid, tokens.refreshToken, sessionId, ip, ua);
 
         return tokens;
     }
 
-    static async refresh(
-        user: User, oldToken: string, sessionId?: string):
-        Promise<TokenPair>
+    static async refresh(user: User, oldToken: string, sessionId: string, ip: string, ua: string): Promise<TokenPair | null>
     {
         logger.info(
             'AuthService.refresh - rotating tokens',
             {uuid: user.uuid, sessionId});
+
         const newTokens = TokenService.generateTokenPair(
-            {id: user.uuid, email: user.email});
+            {id: user.uuid, email: user.email, sessionId: sessionId});
+
         await RefreshService.revoke(user.uuid, sessionId);
+
         await RefreshService.save(
             user.uuid,
             newTokens.refreshToken,
-            sessionId || user.uuid);
+            sessionId, ip, ua);
+
         return newTokens;
     }
 
-    static async logout(token?: string, sessionId?: string):
+    static async logout(token: string, sessionId?: string):
         Promise<void>
     {
-        logger.info(
-            'AuthService.logout - revoking tokens', {sessionId});
-        if (!token) return;
+        logger.info('AuthService.logout - revoking tokens', {sessionId});
+
         try {
-            const payload =
-                TokenService.verifyRefresh(token) as UserPayload;
+            const payload = TokenService.verifyRefresh(token) as UserPayload;
             await RefreshService.revoke(payload.id, sessionId);
         } catch {
-            logger.debug(' - invalid token')
+            logger.debug('AuthService.logout - invalid token');
         }
     }
 }
