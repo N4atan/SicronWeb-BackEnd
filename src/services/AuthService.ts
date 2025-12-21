@@ -80,6 +80,11 @@ export class AuthService
                 });
                 return {status: AuthStatus.FORBIDDEN};
             }
+            
+	    if (!refreshToken) {
+                logger.debug('Auth: no refresh token provided');
+                return {status: AuthStatus.UNAUTHENTICATED};
+            }
 
             const valid = await RefreshService.isValid(
                 user.uuid, refreshToken, sessionId, ip, userAgent);
