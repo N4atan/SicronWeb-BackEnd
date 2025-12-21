@@ -8,7 +8,7 @@ export type RedisClient = {
     setex: (key: string, ttl: number, value: string) => Promise<unknown>;
     del: (...keys: string[]) => Promise<unknown>;
     scanStream: (opts: { match?: string }) => NodeJS.ReadableStream;
-};
+} | Redis | InMemoriaRedis;
 
 async function createRedisClient(): Promise<RedisClient> {
     const requested = process.env.REDIS_MODE as 'redis' | 'in-memory' | undefined;
@@ -16,7 +16,7 @@ async function createRedisClient(): Promise<RedisClient> {
     if (requested === 'in-memory') {
         const client = new InMemoriaRedis();
         await client.connect();
-        return client as unknown as RedisClient;
+        return client;
     }
 
     const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
@@ -29,15 +29,8 @@ async function createRedisClient(): Promise<RedisClient> {
     client.on('error', (err: unknown) => logger.error('Redis client error:', err));
     client.on('end', () => logger.warn('Redis connection closed'));
 
-    return client as unknown as RedisClient;
+    return client;
 }
 
-let redisClient: RedisClient;
-
-(async () => {
-    redisClient = await createRedisClient();
-})().catch((err) => {
-    logger.error('Redis initialization failed:', err);
-});
-
-export default redisClient!;
+let redisClient: Promise<RedisClient> = createRedisClient();
+export default redisClient;

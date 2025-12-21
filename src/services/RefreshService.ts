@@ -1,4 +1,4 @@
-import redisClient from '../config/redis';
+import redisClient,{RedisClient} from '../config/redis';
 
 const REFRESH_EXPIRE_SECONDS = 7 * 24 * 60 * 60;  // 7 Days in seconds
 
@@ -11,6 +11,18 @@ const REFRESH_EXPIRE_SECONDS = 7 * 24 * 60 * 60;  // 7 Days in seconds
  */
 export class RefreshService
 {
+    private static client: RedisClient | undefined; 
+
+    /**
+     * Initializes the RefreshService Redis client.
+     *
+     * @returns Promise<void>
+     */
+    static async init(): Promise<void>
+    {
+    	RefreshService.client = await redisClient;
+    }
+ 
     /**
      * Saves a refresh token in Redis.
      *
@@ -23,7 +35,7 @@ export class RefreshService
         Promise<void>
     {
         const key = `refresh_token:${uuid}:${sessionId}`;
-        await redisClient.setex(
+        await RefreshService.client?.setex(
             key, REFRESH_EXPIRE_SECONDS, token);
     }
 
@@ -42,7 +54,7 @@ export class RefreshService
         // Require explicit sessionId — no fallback scanning.
         if (!sessionId) return false;
         const key = `refresh_token:${uuid}:${sessionId}`;
-        const storedToken = await redisClient.get(key);
+        const storedToken = await RefreshService.client?.get(key);
         return storedToken === token;
     }
 
@@ -59,30 +71,30 @@ export class RefreshService
     {
         if (sessionId) {
             const key = `refresh_token:${uuid}:${sessionId}`;
-            await redisClient.del(key);
+            await RefreshService.client?.del(key);
             return;
         }
 
-        const stream = redisClient.scanStream(
+        const stream = RefreshService.client?.scanStream(
             {match: `refresh_token:${uuid}:*`});
         const keysToDelete: string[] = [];
 
         return new Promise((resolve, reject) => {
-            stream.on('data', (keys: string[]) => {
+            stream?.on('data', (keys: string[]) => {
                 if (keys.length) keysToDelete.push(...keys);
             });
 
-            stream.on('end', async () => {
+            stream?.on('end', async () => {
                 try {
                     if (keysToDelete.length)
-                        await redisClient.del(...keysToDelete);
+                        await RefreshService.client?.del(...keysToDelete);
                     resolve();
                 } catch (err) {
                     reject(err);
                 }
             });
 
-            stream.on('error', (err: unknown) => reject(err));
+            stream?.on('error', (err: unknown) => reject(err));
         });
     }
 }

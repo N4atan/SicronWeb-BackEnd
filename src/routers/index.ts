@@ -9,7 +9,11 @@ import SupplierRoutes from './SupplierRoutes';
 import UserDonationRoutes from './UserDonationRoutes';
 import UserRoutes from './UserRoutes';
 
+import { reassureRefreshServiceInitialization } from '../middlewares/reassureRefreshServiceInitialization';
+
 const router: Router = Router();
+
+router.use(reassureRefreshServiceInitialization);
 
 /**
  * Main Router linking all sub-routers.
