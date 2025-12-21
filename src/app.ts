@@ -77,9 +77,10 @@ export class App
             }),
         );
 
-        this.app.use((_req, _res, next) => {
+        this.app.use((req, _res, next) => {
             logger.warn(
-                '------------------ New request -----------\n\n');
+                '------------------ Incoming request -----------\n\n');
+	    logger.warn('---> IP Address ---> ', req.ip);
             next();
         })
     }
