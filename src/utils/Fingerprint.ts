@@ -26,23 +26,21 @@ export class Fingerprint
 		}
 	}
 
-	public static clone(other: Fingerprint)
+	public constructor(ip?: string, userAgent?: string, other?: Fingerprint)
 	{
-		let cloned = new Fingerprint('', '');
+		if (!ip || !userAgent) {
+			if (other) {
+				this.ip = other.ip;
+				this.range = other.range;
+				this.asn = other.asn;
+				this.hash = other.hash;
+				this.time = other.time;
+				return;
+			}
 
-		cloned.ip = other.ip;
-		cloned.range = other.range;
-		cloned.hash = other.hash;
-		cloned.asn = other.asn;
-		cloned.time = other.time;
-		cloned.chck = other.chck;
-
-		return cloned;
-	}
-
-	public constructor(ip: string, userAgent: string)
-	{
-		if (!ip) return;
+			ip = '0.0.0.0';
+			userAgent = '';
+		}
 
 		this.ip    = ip;
 		this.range = Fingerprint.ipRangeOf(this.ip);
