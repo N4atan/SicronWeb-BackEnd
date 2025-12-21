@@ -26,18 +26,24 @@ export class Fingerprint
 		}
 	}
 
-	public constructor(other: Fingerprint)
+	public static clone(other: Fingerprint)
 	{
-		this.ip = other.ip;
-		this.range = other.range;
-		this.hash = other.hash;
-		this.asn = other.asn;
-		this.time = other.time;
-		this.chck = other.chck;
+		let cloned = new Fingerprint('', '');
+
+		cloned.ip = other.ip;
+		cloned.range = other.range;
+		cloned.hash = other.hash;
+		cloned.asn = other.asn;
+		cloned.time = other.time;
+		cloned.chck = other.chck;
+
+		return cloned;
 	}
 
 	public constructor(ip: string, userAgent: string)
 	{
+		if (!ip) return;
+
 		this.ip    = ip;
 		this.range = Fingerprint.ipRangeOf(this.ip);
 		this.hash  = crypto.createHash('sha256').update(userAgent).digest('hex');

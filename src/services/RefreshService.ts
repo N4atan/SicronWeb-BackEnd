@@ -36,7 +36,7 @@ export class RefreshService {
             if (storedToken !== token) return false;
             if (!fingerprint) return false;
 
-            return new Fingerprint(fingerprint).equals(new Fingerprint(ip || '0.0.0.0', ua || ''));
+            return Fingerprint.clone(fingerprint).equals(new Fingerprint(ip || '0.0.0.0', ua || ''));
         } catch (err) {
             logger.error('RefreshService.isValid parse error:', err);
             return false;
