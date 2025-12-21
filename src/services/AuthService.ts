@@ -67,11 +67,6 @@ export class AuthService
                 return {status: AuthStatus.FORBIDDEN};
             }
 
-            if (!refreshToken) {
-                logger.warn('Auth: Refresh token not present');
-                return {status: AuthStatus.FORBIDDEN};
-            }
-
             if (!sessionId) {
                 logger.warn(
                     'Auth: refresh token present but missing sessionId');
@@ -92,7 +87,7 @@ export class AuthService
                 logger.warn('Auth: refresh token not valid');
                 return {status: AuthStatus.EXPIRED};
             }
-
+            
             logger.debug(
                 'Auth: user authenticated',
                 {uuid: user.uuid, email: user.email});

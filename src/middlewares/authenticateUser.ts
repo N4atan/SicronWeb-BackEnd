@@ -26,7 +26,7 @@ export function authenticateUser(
         const sessionId = req.cookies?.sessionId || undefined;
 
         const {user, status} = await AuthService.check(
-            accessToken, refreshToken, sessionId, req.ip, req.get('user-agent'));
+            accessToken, refreshToken, sessionId, req.ip, req.get('user-agent') || '');
 
         switch (status) {
             case AuthStatus.AUTHENTICATED:
