@@ -155,6 +155,7 @@ export class User extends GenericEntity
     @BeforeUpdate()
     async beforeInsert(): Promise<void>
     {
+	if (!this.creation_date) this.creation_date = new Date();
         // On insert, store the initial password as previous_password
         if (this.previous_password !== this.password) {
             this.password = await CryptService.hash(this.password);
