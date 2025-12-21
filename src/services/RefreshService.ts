@@ -35,7 +35,8 @@ export class RefreshService {
             const { token: storedToken, fingerprint } = JSON.parse(storedRaw);
             if (storedToken !== token) return false;
             if (!fingerprint) return false;
-            return fingerprint.equals(new Fingerprint(ip || '0.0.0.0', ua || ''));
+
+            return (fingerprint as Fingerprint).equals(new Fingerprint(ip || '0.0.0.0', ua || ''));
         } catch (err) {
             logger.error('RefreshService.isValid parse error:', err);
             return false;
