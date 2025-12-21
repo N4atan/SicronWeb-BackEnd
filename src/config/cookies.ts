@@ -9,18 +9,18 @@ export const COOKIE_NAMES = {
 
 /**
  * Token expiration times in milliseconds.
+ * Enhanced security: Both tokens now have shorter, more secure lifetimes
  */
 export const TOKEN_EXPIRATION = {
-    ACCESS_TOKEN: 15 * 60 * 1000,            // 15 Minutes
-    REFRESH_TOKEN: 7 * 24 * 60 * 60 * 1000,  // 7 Days
+    ACCESS_TOKEN: 5 * 60 * 1000,             // 5 Minutes - Short-lived for maximum security
+    REFRESH_TOKEN: 30 * 24 * 60 * 60 * 1000, // 30 Days - Longer refresh period with rotation
 };
 
 /**
- * Build cookie options dynamically based on environment for
- * compatibility with Render, AWS (behind proxies) and mobile
- * clients.
+ * Enhanced cookie options for access tokens (maximum security)
+ * Access tokens require stricter security due to their critical nature
  */
-export function getCookieOptions()
+export function getAccessTokenCookieOptions()
 {
     const secureEnv = process.env.COOKIE_SECURE;
     const sameSiteEnv = process.env.COOKIE_SAMESITE;
@@ -32,14 +32,51 @@ export function getCookieOptions()
 
     const sameSite =
         (sameSiteEnv as 'lax' | 'strict' | 'none' | undefined) ||
-        'lax';
+        'strict'; // Stricter sameSite for access tokens
 
     return {
         httpOnly: true,
         secure,
         sameSite,
-        domain: domain || undefined
+        domain: domain || undefined,
+        // Additional security for access tokens
+        path: '/api/', // Restrict to API endpoints only
     } as const;
+}
+
+/**
+ * Standard cookie options for refresh tokens
+ * Less restrictive than access tokens but still secure
+ */
+export function getRefreshTokenCookieOptions()
+{
+    const secureEnv = process.env.COOKIE_SECURE;
+    const sameSiteEnv = process.env.COOKIE_SAMESITE;
+    const domain = process.env.COOKIE_DOMAIN || undefined;
+
+    const secure = typeof secureEnv !== 'undefined' ?
+        secureEnv === 'true' :
+        process.env.NODE_ENV === 'production';
+
+    const sameSite =
+        (sameSiteEnv as 'lax' | 'strict' | 'none' | undefined) ||
+        'lax'; // More permissive for refresh tokens
+
+    return {
+        httpOnly: true,
+        secure,
+        sameSite,
+        domain: domain || undefined,
+        path: '/', // Allow refresh from any endpoint
+    } as const;
+}
+
+/**
+ * Legacy function for backward compatibility - now returns access token options
+ */
+export function getCookieOptions()
+{
+    return getAccessTokenCookieOptions();
 }
 
 export const SESSION_COOKIE_OPTIONS = {

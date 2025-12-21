@@ -1,11 +1,21 @@
+import crypto from 'crypto';
+
+// Generate secure random secrets for development
+const generateSecureSecret = (length: number = 64): string => {
+    return crypto.randomBytes(length).toString('hex');
+};
+
+// Set environment variables with secure defaults
 process.env.PORT = '3000';
 process.env.DB_HOST = 'localhost';
 process.env.DB_PORT = '3306';
 process.env.DB_USERNAME = 'root';
-process.env.DB_PASSWORD = 'root';
+process.env.DB_PASSWORD = 'root'; // TODO: Replace with secure password management
 process.env.DB_NAME = 'defaultdb';
-process.env.JWT_ACCESS_SECRET = 'secret';
-process.env.JWT_REFRESH_SECRET = 'secret';
+
+// Generate secure JWT secrets instead of using hardcoded 'secret'
+process.env.JWT_ACCESS_SECRET = generateSecureSecret();
+process.env.JWT_REFRESH_SECRET = generateSecureSecret();
 process.env.REDIS_URL = 'redis://localhost:6379';
 process.env.BCRYPT_SALT_HASHES = '10';
 

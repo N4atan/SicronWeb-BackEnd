@@ -2,12 +2,13 @@ import {NextFunction, Request, Response} from 'express';
 
 import {UserRole} from '../entities/User';
 import {AuthService, AuthStatus} from '../services/AuthService';
-import {clearAuthCookies, clearSessionIdCookie} from '../utils/cookieUtils';
+import {clearAuthCookies, clearSessionIdCookie, setAccessTokenCookie} from '../utils/cookieUtils';
+import logger from '../utils/logger';
 
 /**
- * Middleware Factor for User Authentication.
- * Verifies Access and Refresh tokens, and checks optional Role
- * requirements.
+ * Enhanced Middleware Factor for User Authentication with Auto-Refresh.
+ * Verifies Access and Refresh tokens, implements automatic token refresh,
+ * and checks optional Role requirements.
  *
  * @param required - If true, returns 401 if auth fails. If false,
  *     continues matching routes (optional auth).
@@ -25,7 +26,7 @@ export function authenticateUser(
         const refreshToken = req.cookies?.refreshToken || undefined;
         const sessionId = req.cookies?.sessionId || undefined;
 
-        const {user, status} = await AuthService.check(
+        const {user, status, autoRefreshed} = await AuthService.check(
             accessToken, refreshToken, sessionId, req.ip, req.get('user-agent') || '');
 
         switch (status) {
@@ -35,7 +36,14 @@ export function authenticateUser(
                 }
 
                 req.user = user;
+                
+                // If tokens were auto-refreshed, log the event
+                if (autoRefreshed && user) {
+                    logger.debug('Auth middleware: User authenticated with auto-refresh', {uuid: user.uuid});
+                }
+                
                 return next();
+                
             case AuthStatus.EXPIRED:
                 if (required) {
                     return res.sendStatus(401);

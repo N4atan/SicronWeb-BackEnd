@@ -18,20 +18,21 @@ export enum AuthStatus
 export class AuthService
 {
     /**
-     * Centralized authentication check used by middlewares.
-     * Refactored to avoid direct usage of req/res.
+     * Enhanced centralized authentication check with automatic refresh capabilities.
+     * Implements strong security for both access and refresh tokens.
      */
     static async check(
         accessToken: string|undefined,
         refreshToken: string|undefined,
         sessionId: string|undefined,
-	ip?: string,
-	userAgent?: string): Promise<{user?: User; status: AuthStatus}>
+        ip?: string,
+        userAgent?: string): Promise<{user?: User; status: AuthStatus; autoRefreshed?: boolean}>
     {
         try {
             let payload: UserPayload|undefined;
             let user: User|undefined;
 
+            // First, try to validate access token
             if (!accessToken) {
                 logger.debug('Auth: no access token provided');
                 return {status: AuthStatus.UNAUTHENTICATED};
@@ -51,6 +52,7 @@ export class AuthService
                 return {status: AuthStatus.FORBIDDEN};
             }
 
+            // Validate user exists and matches token
             const foundUser = await userRepo.findByUUID(payload.id);
             if (!foundUser) {
                 logger.warn(
@@ -68,8 +70,7 @@ export class AuthService
             }
 
             if (!sessionId) {
-                logger.warn(
-                    'Auth: refresh token present but missing sessionId');
+                logger.warn('Auth: missing sessionId');
                 return {status: AuthStatus.FORBIDDEN};
             }
 
@@ -80,66 +81,109 @@ export class AuthService
                 });
                 return {status: AuthStatus.FORBIDDEN};
             }
-            
-	    if (!refreshToken) {
-                logger.debug('Auth: no refresh token provided');
-                return {status: AuthStatus.UNAUTHENTICATED};
+
+            // Enhanced: Check access token validity first with Redis validation
+            const accessValid = await RefreshService.isAccessValid(
+                user.uuid, accessToken, sessionId, ip, userAgent);
+
+            if (accessValid) {
+                logger.debug(
+                    'Auth: user authenticated via access token',
+                    {uuid: user.uuid, email: user.email});
+                return {status: AuthStatus.AUTHENTICATED, user};
             }
 
-            const valid = await RefreshService.isValid(
-                user.uuid, refreshToken, sessionId, ip, userAgent);
-            if (!valid) {
-                logger.warn('Auth: refresh token not valid');
+            // Access token not valid in Redis, but JWT might still be valid
+            // Check if refresh token is available for potential auto-refresh
+            if (!refreshToken) {
+                logger.warn('Auth: Access token expired, no refresh token available');
                 return {status: AuthStatus.EXPIRED};
             }
-            
-            logger.debug(
-                'Auth: user authenticated',
-                {uuid: user.uuid, email: user.email});
-            return {status: AuthStatus.AUTHENTICATED, user};
+
+            // Try to validate refresh token
+            const refreshValid = await RefreshService.isRefreshValid(
+                user.uuid, refreshToken, sessionId, ip, userAgent);
+
+            if (refreshValid) {
+                logger.info('Auth: Auto-refreshing tokens for user', {uuid: user.uuid, sessionId});
+                
+                // Generate new tokens
+                const newTokens = TokenService.generateTokenPair({
+                    id: user.uuid, 
+                    email: user.email, 
+                    sessionId: sessionId 
+                });
+
+                // Save both tokens with enhanced security
+                await RefreshService.saveAccessToken(
+                    user.uuid, newTokens.accessToken, sessionId, ip, userAgent);
+                await RefreshService.saveRefreshToken(
+                    user.uuid, newTokens.refreshToken, sessionId, ip, userAgent);
+
+                logger.info('Auth: Auto-refresh completed successfully', {uuid: user.uuid, sessionId});
+                return {status: AuthStatus.AUTHENTICATED, user, autoRefreshed: true};
+            }
+
+            logger.warn('Auth: Both access and refresh tokens invalid');
+            return {status: AuthStatus.EXPIRED};
+
         } catch (err) {
             logger.error('Auth: unexpected error', err);
             return {status: AuthStatus.FORBIDDEN};
         }
     }
 
+    /**
+     * Enhanced login with dual token storage
+     */
     static async login(user: User, sessionId: string, ip: string, ua: string):
         Promise<TokenPair>
     {
         logger.info(
-            'AuthService.login - generating tokens',
+            'AuthService.login - generating enhanced security tokens',
             {uuid: user.uuid, sessionId});
         const tokens = TokenService.generateTokenPair(
             {id: user.uuid, email: user.email, sessionId: sessionId });
-        await RefreshService.save(
+        
+        // Save both tokens with enhanced security
+        await RefreshService.saveAccessToken(
+            user.uuid, tokens.accessToken, sessionId, ip, ua);
+        await RefreshService.saveRefreshToken(
             user.uuid, tokens.refreshToken, sessionId, ip, ua);
 
         return tokens;
     }
 
+    /**
+     * Enhanced refresh with dual token rotation
+     */
     static async refresh(user: User, oldToken: string, sessionId: string, ip: string, ua: string): Promise<TokenPair | null>
     {
         logger.info(
-            'AuthService.refresh - rotating tokens',
+            'AuthService.refresh - rotating enhanced security tokens',
             {uuid: user.uuid, sessionId});
 
         const newTokens = TokenService.generateTokenPair(
             {id: user.uuid, email: user.email, sessionId: sessionId});
 
+        // Revoke old tokens
         await RefreshService.revoke(user.uuid, sessionId);
 
-        await RefreshService.save(
-            user.uuid,
-            newTokens.refreshToken,
-            sessionId, ip, ua);
+        // Save new tokens with enhanced security
+        await RefreshService.saveAccessToken(
+            user.uuid, newTokens.accessToken, sessionId, ip, ua);
+        await RefreshService.saveRefreshToken(
+            user.uuid, newTokens.refreshToken, sessionId, ip, ua);
 
         return newTokens;
     }
 
-    static async logout(token: string, sessionId?: string):
-        Promise<void>
+    /**
+     * Enhanced logout with complete token revocation
+     */
+    static async logout(token: string, sessionId?: string): Promise<void>
     {
-        logger.info('AuthService.logout - revoking tokens', {sessionId});
+        logger.info('AuthService.logout - revoking enhanced security tokens', {sessionId});
 
         try {
             const payload = TokenService.verifyRefresh(token) as UserPayload;
