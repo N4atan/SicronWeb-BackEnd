@@ -35,6 +35,7 @@ export class Fingerprint
 				this.asn = other.asn;
 				this.hash = other.hash;
 				this.time = other.time;
+				this.chck = other.chck;
 				return;
 			}
 
