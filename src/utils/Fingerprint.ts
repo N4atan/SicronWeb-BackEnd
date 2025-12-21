@@ -26,6 +26,16 @@ export class Fingerprint
 		}
 	}
 
+	public constructor(other: Fingerprint)
+	{
+		this.ip = other.ip;
+		this.range = other.range;
+		this.hash = other.hash;
+		this.asn = other.asn;
+		this.time = other.time;
+		this.chck = other.chck;
+	}
+
 	public constructor(ip: string, userAgent: string)
 	{
 		this.ip    = ip;

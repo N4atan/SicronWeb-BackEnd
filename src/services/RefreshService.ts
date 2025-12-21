@@ -36,7 +36,7 @@ export class RefreshService {
             if (storedToken !== token) return false;
             if (!fingerprint) return false;
 
-            return (fingerprint as Fingerprint).equals(new Fingerprint(ip || '0.0.0.0', ua || ''));
+            return new Fingerprint(fingerprint).equals(new Fingerprint(ip || '0.0.0.0', ua || ''));
         } catch (err) {
             logger.error('RefreshService.isValid parse error:', err);
             return false;
@@ -45,7 +45,7 @@ export class RefreshService {
 
     static async revoke(uuid: string, sessionId?: string, ip?: string, ua?: string): Promise<void> {
         if (sessionId) {
-            const key = `refresh_token:${uuid}:${sessionId}:${ip}:${ua}`;
+            const key = `refresh_token:${uuid}:${sessionId}`;
             await RefreshService.client?.del(key);
             return;
         }
