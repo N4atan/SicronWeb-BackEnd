@@ -5,13 +5,14 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { User } from "../entities/User";
-import { NGO  } from "../entities/NGO";
+import { NGO } from "../entities/NGO";
 import { Supplier } from "../entities/Supplier";
 import { SupplierPaymentReceipt } from "../entities/SupplierPaymentReceipt";
 import { NGOProduct } from "../entities/NGOProduct";
 import { SupplierProduct } from "../entities/SupplierProduct";
 import { Product } from "../entities/Product";
 import { UserDonationReceipt } from "../entities/UserDonationReceipt";
+import { UserDonationItem } from "../entities/UserDonationItem";
 
 const { DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME } = process.env;
 
@@ -24,5 +25,5 @@ export const AppDataSource = new DataSource({
     database: DB_NAME,
     synchronize: true,
     logging: true,
-    entities: [User, NGO, Supplier, SupplierPaymentReceipt, SupplierProduct, Product, NGOProduct, UserDonationReceipt]
+    entities: [User, NGO, Supplier, SupplierPaymentReceipt, SupplierProduct, Product, NGOProduct, UserDonationReceipt, UserDonationItem]
 });
