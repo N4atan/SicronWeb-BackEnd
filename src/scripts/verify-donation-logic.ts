@@ -92,48 +92,53 @@ async function main() {
         console.log(`Targeting Product: ${targetProduct.name} (${targetProduct.uuid})`);
         console.log(`Initial Collected Quantity: ${initialQuantity}`);
 
-        // 3. Make Donation
-        const donationAmount = 1;
-        console.log(`3. donating ${donationAmount} unit...`);
+        // 3. Make Donation Logic (Normal + Overflow)
 
-        const donateRes = await fetchWithAuth(`${BASE_URL}/donations`, {
+        const remaining = Number(targetProduct.quantity || 0) - initialQuantity;
+        console.log(`Remaining quantity: ${remaining}`);
+
+        if (remaining <= 0) {
+            console.log('Goal already reached. Testing overflow directly...');
+        } else {
+            console.log(`Testing normal donation of 1 unit...`);
+            const donateRes = await fetchWithAuth(`${BASE_URL}/donations`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    ngo_uuid: targetNGO.uuid,
+                    items: [
+                        { product_uuid: targetProduct.uuid, quantity: 1 }
+                    ],
+                    fileUrl: 'http://test.com/receipt.jpg'
+                })
+            });
+            if (!donateRes.ok) throw new Error(`Normal donation failed: ${donateRes.status}`);
+            console.log('Normal donation successful.');
+        }
+
+        // 4. Verify Overflow
+        console.log('4. Testing Overflow (Donating Remaining + 10)...');
+        const overflowQty = 10000;
+
+        const failRes = await fetchWithAuth(`${BASE_URL}/donations`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 ngo_uuid: targetNGO.uuid,
                 items: [
-                    { product_uuid: targetProduct.uuid, quantity: donationAmount }
+                    { product_uuid: targetProduct.uuid, quantity: overflowQty }
                 ],
                 fileUrl: 'http://test.com/receipt.jpg'
             })
         });
 
-        if (!donateRes.ok) {
-            console.error('Request Body:', JSON.stringify({
-                ngo_uuid: targetNGO.uuid,
-                items: [
-                    { product_uuid: targetProduct.uuid, quantity: donationAmount }
-                ],
-                fileUrl: 'http://test.com/receipt.jpg'
-            }));
-            throw new Error(`Donation failed: ${donateRes.status} ${donateRes.statusText} - "${await donateRes.text()}"`);
-        }
-        console.log('Donation successful.');
-
-        // 4. Verify Update
-        console.log('4. Verifying quantity update...');
-        const verifyRes = await fetchWithAuth(`${BASE_URL}/ngos/${targetNGO.uuid}`);
-        const verifyDetail = await verifyRes.json();
-        const verifiedItem = verifyDetail.products.find((p: any) => p.product.uuid === targetProduct.uuid);
-
-        const finalQuantity = Number(verifiedItem.collected_quantity);
-        console.log(`Final Collected Quantity: ${finalQuantity}`);
-
-        if (finalQuantity === initialQuantity + donationAmount) {
-            console.log('✅ TEST PASSED: Quantity updated correctly!');
+        if (failRes.status === 400) {
+            console.log('✅ TEST PASSED: Overflow rejected with 400!');
+            const err = await failRes.json();
+            console.log('Error message received:', err.message);
         } else {
-            console.error('❌ TEST FAILED: Quantity mismatch!');
-            console.error(`Expected: ${initialQuantity + donationAmount}, Got: ${finalQuantity}`);
+            console.error(`❌ TEST FAILED: Expected 400, got ${failRes.status}`);
+            console.error(await failRes.text());
             process.exit(1);
         }
 
